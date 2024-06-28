@@ -1,0 +1,22 @@
+BasedOnStyle: LLVM
+IndentWidth: 3
+ContinuationIndentWidth: 3
+ColumnLimit: 100
+
+BinPackArguments: false
+AllowAllArgumentsOnNextLine: false
+AlignAfterOpenBracket: BlockIndent
+SpaceBeforeParens: Never
+PointerAlignment: Left
+ReflowComments: true
+BreakConstructorInitializers: AfterColon
+PackConstructorInitializers: CurrentLine
+ConstructorInitializerIndentWidth: 3
+AllowShortBlocksOnASingleLine: Never
+AllowShortFunctionsOnASingleLine: Empty
+Cpp11BracedListStyle: true
+IndentExternBlock: NoIndent
+IndentAccessModifiers: false
+AccessModifierOffset: -3
+PenaltyReturnTypeOnItsOwnLine: 200
+AlignArrayOfStructures: None
