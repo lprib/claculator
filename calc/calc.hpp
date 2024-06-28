@@ -7,21 +7,6 @@
 
 namespace calc {
 
-class Cell {
-public:
-   Cell() : m_type(Type::kInt), m_data(int64_t{0}) {}
-
-private:
-   enum class Type { kInt, kDouble };
-   union Data {
-      int64_t i;
-      double d;
-   };
-
-   Type m_type;
-   Data m_data;
-};
-
 struct Stack {
    std::vector<std::int64_t> data;
 
@@ -41,11 +26,11 @@ struct State {
    Stack speculative_stack;
    bool speculate_poisoned = false;
 
-   // void Speculate(std::vector<parse::Token> const& tokens);
+   void Speculate(std::vector<parse::Token> const& tokens);
    void Commit();
 
 private:
-   // void SpeculateToken(parse::Token const& token);
+   void SpeculateToken(parse::Token const& token);
    bool CheckSpecStackSize(std::size_t size);
 };
 

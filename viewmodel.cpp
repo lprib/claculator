@@ -5,11 +5,8 @@
 #include <charconv>
 #include <iostream>
 
-
 // temp for test
-RegisterDisplay test_register(std::vector<Field>{
-   Field(0, 1, "TEST", FieldDisplay::kNumeric)
-});
+RegisterDisplay test_register(std::vector<Field>{Field(0, 1, "TEST", FieldDisplay::kNumeric)});
 
 void ViewModel::OnCharPressed(int chr) {
    switch(editor_mode.mode) {
@@ -53,8 +50,8 @@ void ViewModel::OnKeyPressed(KeyboardKey k) {
       return;
    }
 
-   if((editor_mode.mode == EditorMode::Mode::kNormal) ||
-      IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
+   if((editor_mode.mode == EditorMode::Mode::kNormal) || IsKeyDown(KEY_LEFT_CONTROL) ||
+      IsKeyDown(KEY_RIGHT_CONTROL)) {
       switch(k) {
       case KEY_H:
          if(highlighted_index > 0) {
@@ -152,12 +149,7 @@ std::string ViewModel::GetStackDisplayString(int index) {
       base = 2;
       break;
    }
-   std::to_chars(
-      buf.begin(),
-      buf.end(),
-      state.speculative_stack.data[index],
-      base
-   );
+   std::to_chars(buf.begin(), buf.end(), state.speculative_stack.data[index], base);
    auto str = std::string(buf.begin());
    if(sep_mode.mode != SeparatorMode::Mode::kNone) {
       int skipped = 1;
@@ -173,8 +165,20 @@ std::string ViewModel::GetStackDisplayString(int index) {
 }
 
 void ViewModel::OnInputChanged(bool reset_history_highlight) {
-   // auto parsed = parse::parse(current_input);
-   // state.Speculate(parsed);
+   parse::DefaultNumericBase base = parse::DefaultNumericBase::kDec;
+   switch(input_display.mode) {
+   case NumericDisplayMode::Mode::kDec:
+      base = parse::DefaultNumericBase::kDec;
+      break;
+   case NumericDisplayMode::Mode::kHex:
+      base = parse::DefaultNumericBase::kHex;
+      break;
+   case NumericDisplayMode::Mode::kBin:
+      base = parse::DefaultNumericBase::kBin;
+      break;
+   }
+   auto parsed = parse::parse(parse::ParserSettings(base), current_input);
+   state.Speculate(parsed);
    if(reset_history_highlight) {
       history_highlighted_index = history.size();
    }

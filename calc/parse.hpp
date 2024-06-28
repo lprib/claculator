@@ -17,7 +17,7 @@ enum class TokenType {
    kError,
 };
 
-enum class BuiltinOperation { kAdd, kSub, kMul, kDiv };
+enum class BuiltinOperation { kAdd, kSub, kMul, kDiv, kIntDiv, kMod, kAnd, kOr, kXor, kInv, kShr, kShl };
 static constexpr BuiltinOperation kDefaultBuiltinOperation = BuiltinOperation::kAdd;
 
 class Token {
@@ -61,6 +61,17 @@ public:
       return end - start;
    }
 
+   bool is_integer() {
+      switch(type) {
+      case TokenType::kDecimalNumber:
+      case TokenType::kHexNumber:
+      case TokenType::kBinaryNumber:
+         return true;
+      default:
+         return false;
+      }
+   }
+
    friend std::ostream& operator<<(std::ostream& o, Token const& tok) {
       switch(tok.type) {
       case TokenType::kDecimalNumber:
@@ -86,6 +97,30 @@ public:
             break;
          case BuiltinOperation::kDiv:
             o << "/";
+            break;
+         case BuiltinOperation::kIntDiv:
+            o << "//";
+            break;
+         case BuiltinOperation::kMod:
+            o << "%";
+            break;
+         case BuiltinOperation::kAnd:
+            o << "&";
+            break;
+         case BuiltinOperation::kOr:
+            o << "|";
+            break;
+         case BuiltinOperation::kXor:
+            o << "^";
+            break;
+         case BuiltinOperation::kInv:
+            o << "~";
+            break;
+         case BuiltinOperation::kShr:
+            o << ">>";
+            break;
+         case BuiltinOperation::kShl:
+            o << "<<";
             break;
          }
          break;

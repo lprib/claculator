@@ -11,10 +11,6 @@ int main(void) {
    ViewModel viewmodel;
    View view(viewmodel);
 
-   parse::unit_test();
-
-   exit(0);
-
    const int screenWidth = 800;
    const int screenHeight = 450;
    InitWindow(

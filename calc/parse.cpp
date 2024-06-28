@@ -10,7 +10,7 @@ using namespace std::literals;
 
 namespace parse {
 
-char to_lower(char upper) {
+static char to_lower(char upper) {
    if(upper >= 'A' && upper <= 'Z') {
       return upper - 'A' + 'a';
    } else {
@@ -78,7 +78,7 @@ struct Parser {
 
    static constexpr std::string_view kNumericChars = "0123456789abcdef";
    std::optional<Token> number(int base) {
-      if(base > kNumericChars.size()) {
+      if(size_t{base} > kNumericChars.size()) {
          return std::nullopt;
       }
 
@@ -155,8 +155,11 @@ struct Parser {
       return generic_prefixed_number("0i"sv, 10);
    }
 
-   std::optional<Token> builtin_from_char(char c, size_t start) {
-      switch(c) {
+   std::optional<Token> builtin_from_chars(std::string_view c, size_t start) {
+      if(c.size() < 1) {
+         return std::nullopt;
+      }
+      switch(c[0]) {
       case '+':
          return Token::make_builtin(start, start + 1, BuiltinOperation::kAdd);
       case '*':
@@ -164,15 +167,40 @@ struct Parser {
       case '-':
          return Token::make_builtin(start, start + 1, BuiltinOperation::kSub);
       case '/':
-         return Token::make_builtin(start, start + 1, BuiltinOperation::kDiv);
+         if(c.size() >= 2 && c[1] == '/') {
+            return Token::make_builtin(start, start + 2, BuiltinOperation::kIntDiv);
+         } else {
+            return Token::make_builtin(start, start + 1, BuiltinOperation::kDiv);
+         }
+      case '%':
+         return Token::make_builtin(start, start + 1, BuiltinOperation::kMod);
+      case '&':
+         return Token::make_builtin(start, start + 1, BuiltinOperation::kAnd);
+      case '|':
+         return Token::make_builtin(start, start + 1, BuiltinOperation::kOr);
+      case '^':
+         return Token::make_builtin(start, start + 1, BuiltinOperation::kXor);
+      case '~':
+         return Token::make_builtin(start, start + 1, BuiltinOperation::kInv);
+      case '>':
+         if(c.size() >= 2 && c[1] == '>') {
+            return Token::make_builtin(start, start + 2, BuiltinOperation::kShr);
+         }
+         break;
+      case '<':
+         if(c.size() >= 2 && c[1] == '<') {
+            return Token::make_builtin(start, start + 2, BuiltinOperation::kShl);
+         }
+         break;
       default:
-         return std::nullopt;
+         break;
       }
+      return std::nullopt;
    }
 
    std::optional<Token> builtin(bool lookahead, int offset = 0) {
       auto index_offset = current_index + offset;
-      auto tok = builtin_from_char(input[current_index + offset], index_offset);
+      auto tok = builtin_from_chars(input.substr(current_index + offset), index_offset);
       if(lookahead) {
          return tok;
       } else {
@@ -240,7 +268,7 @@ void unit_test() {
    );
 
    auto settings = ParserSettings(DefaultNumericBase::kDec);
-   auto result = parse(settings, "123 0xff 0b1000 word*    3 4*");
+   auto result = parse(settings, "123 0xff 0b1000 word*    3 4* 5 6<<>> abc//abc");
    for(auto token : result) {
       std::cout << token << " ";
    }
