@@ -77,12 +77,13 @@ struct Parser {
    }
 
    static constexpr std::string_view kNumericChars = "0123456789abcdef";
-   std::optional<Token> number(int base) {
-      if(size_t{base} > kNumericChars.size()) {
+   std::optional<Token> number(intbase::IntBase base) {
+      auto int_base = intbase::as_int(base);
+      if(size_t{int_base} > kNumericChars.size()) {
          return std::nullopt;
       }
 
-      std::string_view base_chars = kNumericChars.substr(0, base);
+      std::string_view base_chars = kNumericChars.substr(0, int_base);
 
       int n_chars = 0;
       while(((current_index + n_chars) < input.size()) &&
@@ -109,12 +110,12 @@ struct Parser {
          }
          number += digit * digit_mul;
 
-         if(does_mul_overflow(digit_mul, base)) {
+         if(does_mul_overflow(digit_mul, int_base)) {
             auto tok = Token::make_error(current_index, current_index + n_chars, "overflow");
             current_index += n_chars;
             return tok;
          }
-         digit_mul *= base;
+         digit_mul *= int_base;
       }
 
       auto tok = Token::make_integer(current_index, current_index + n_chars, base, number);
@@ -123,19 +124,10 @@ struct Parser {
    }
 
    std::optional<Token> default_number() {
-      switch(settings.default_numeric_base) {
-      case DefaultNumericBase::kDec:
-         return number(10);
-      case DefaultNumericBase::kHex:
-         return number(16);
-      case DefaultNumericBase::kBin:
-         return number(2);
-      default:
-         return number(10);
-      }
+      return number(settings.default_numeric_base);
    }
 
-   std::optional<Token> generic_prefixed_number(std::string_view pre, int base) {
+   std::optional<Token> generic_prefixed_number(std::string_view pre, intbase::IntBase base) {
       if(prefix(pre)) {
          return number(base);
       } else {
@@ -144,15 +136,15 @@ struct Parser {
    }
 
    std::optional<Token> prefixed_hex_number() {
-      return generic_prefixed_number("0x"sv, 16);
+      return generic_prefixed_number("0x"sv, intbase::IntBase::kHex);
    }
 
    std::optional<Token> prefixed_bin_number() {
-      return generic_prefixed_number("0b"sv, 2);
+      return generic_prefixed_number("0b"sv, intbase::IntBase::kBin);
    }
 
    std::optional<Token> prefixed_dec_number() {
-      return generic_prefixed_number("0i"sv, 10);
+      return generic_prefixed_number("0i"sv, intbase::IntBase::kDec);
    }
 
    std::optional<Token> builtin_from_chars(std::string_view c, size_t start) {
@@ -254,20 +246,27 @@ std::vector<Token> parse(ParserSettings const& settings, std::string_view input)
 }
 
 void unit_test() {
-   std::cout << Parser("69420", ParserSettings(DefaultNumericBase::kDec)).number(10)->number
+   std::cout << Parser("69420", ParserSettings(intbase::IntBase::kDec))
+                   .number(intbase::IntBase::kDec)
+                   ->number
              << "\n";
-   assert(Parser("69420", ParserSettings(DefaultNumericBase::kDec)).number(10)->number == 69420);
    assert(
-      Parser("12AB34CD56EF", ParserSettings(DefaultNumericBase::kDec)).number(16)->number ==
-      0x12AB34CD56EFLL
+      Parser("69420", ParserSettings(intbase::IntBase::kDec))
+         .number(intbase::IntBase::kDec)
+         ->number == 69420
    );
    assert(
-      Parser("100101001110111010111011", ParserSettings(DefaultNumericBase::kDec))
-         .number(2)
+      Parser("12AB34CD56EF", ParserSettings(intbase::IntBase::kDec))
+         .number(intbase::IntBase::kHex)
+         ->number == 0x12AB34CD56EFLL
+   );
+   assert(
+      Parser("100101001110111010111011", ParserSettings(intbase::IntBase::kDec))
+         .number(intbase::IntBase::kBin)
          ->number == 0b100101001110111010111011LL
    );
 
-   auto settings = ParserSettings(DefaultNumericBase::kDec);
+   auto settings = ParserSettings(intbase::IntBase::kDec);
    auto result = parse(settings, "123 0xff 0b1000 word*    3 4* 5 6<<>> abc//abc");
    for(auto token : result) {
       std::cout << token << " ";

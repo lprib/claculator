@@ -1,5 +1,7 @@
 #pragma once
 
+#include "calc/intbase.hpp"
+
 #include <cstdint>
 #include <ostream>
 #include <string>
@@ -17,21 +19,34 @@ enum class TokenType {
    kError,
 };
 
-enum class BuiltinOperation { kAdd, kSub, kMul, kDiv, kIntDiv, kMod, kAnd, kOr, kXor, kInv, kShr, kShl };
+enum class BuiltinOperation {
+   kAdd,
+   kSub,
+   kMul,
+   kDiv,
+   kIntDiv,
+   kMod,
+   kAnd,
+   kOr,
+   kXor,
+   kInv,
+   kShr,
+   kShl
+};
 static constexpr BuiltinOperation kDefaultBuiltinOperation = BuiltinOperation::kAdd;
 
 class Token {
 public:
-   static Token make_integer(size_t start, size_t end, int base, int64_t n) {
+   static Token make_integer(size_t start, size_t end, intbase::IntBase base, int64_t n) {
       TokenType type = TokenType::kDecimalNumber;
       switch(base) {
-      case 2:
+      case intbase::IntBase::kBin:
          type = TokenType::kBinaryNumber;
          break;
-      case 10:
+      case intbase::IntBase::kDec:
          type = TokenType::kDecimalNumber;
          break;
-      case 16:
+      case intbase::IntBase::kHex:
          type = TokenType::kHexNumber;
          break;
       default:
@@ -147,13 +162,11 @@ private:
       text(_text) {}
 };
 
-enum class DefaultNumericBase { kDec, kHex, kBin };
-
 struct ParserSettings {
-   ParserSettings(DefaultNumericBase _default_numeric_base) :
+   ParserSettings(intbase::IntBase _default_numeric_base) :
       default_numeric_base(_default_numeric_base) {}
 
-   DefaultNumericBase default_numeric_base;
+   intbase::IntBase default_numeric_base;
 };
 
 std::vector<Token> parse(ParserSettings const& settings, std::string_view input);

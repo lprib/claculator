@@ -95,6 +95,7 @@ void ViewModel::OnKeyPressed(KeyboardKey k) {
          break;
       case KEY_Z:
          input_display.Rotate();
+         OnInputChanged(true);
          break;
       case KEY_X:
          output_display.Rotate();
@@ -136,19 +137,7 @@ void ViewModel::OnKeyPressed(KeyboardKey k) {
 
 std::string ViewModel::GetStackDisplayString(int index) {
    std::array<char, 33> buf{};
-   int base;
-
-   switch(output_display.mode) {
-   case NumericDisplayMode::Mode::kDec:
-      base = 10;
-      break;
-   case NumericDisplayMode::Mode::kHex:
-      base = 16;
-      break;
-   case NumericDisplayMode::Mode::kBin:
-      base = 2;
-      break;
-   }
+   int base = intbase::as_int(output_display.mode);
    std::to_chars(buf.begin(), buf.end(), state.speculative_stack.data[index], base);
    auto str = std::string(buf.begin());
    if(sep_mode.mode != SeparatorMode::Mode::kNone) {
@@ -165,19 +154,7 @@ std::string ViewModel::GetStackDisplayString(int index) {
 }
 
 void ViewModel::OnInputChanged(bool reset_history_highlight) {
-   parse::DefaultNumericBase base = parse::DefaultNumericBase::kDec;
-   switch(input_display.mode) {
-   case NumericDisplayMode::Mode::kDec:
-      base = parse::DefaultNumericBase::kDec;
-      break;
-   case NumericDisplayMode::Mode::kHex:
-      base = parse::DefaultNumericBase::kHex;
-      break;
-   case NumericDisplayMode::Mode::kBin:
-      base = parse::DefaultNumericBase::kBin;
-      break;
-   }
-   auto parsed = parse::parse(parse::ParserSettings(base), current_input);
+   auto parsed = parse::parse(parse::ParserSettings(input_display.mode), current_input);
    state.Speculate(parsed);
    if(reset_history_highlight) {
       history_highlighted_index = history.size();

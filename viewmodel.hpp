@@ -93,24 +93,12 @@ struct SeparatorMode : public EnumeratedMode {
 };
 
 struct NumericDisplayMode : public EnumeratedMode {
-   NumericDisplayMode(char const* keybind_string) :
-      m_keybind_string(keybind_string) {}
-   enum class Mode { kDec, kHex, kBin };
+   NumericDisplayMode(char const* keybind_string) : m_keybind_string(keybind_string) {}
+   using Mode = intbase::IntBase;
    Mode mode = Mode::kDec;
    char const* m_keybind_string;
    char const* DisplayString() const override {
-      switch(mode) {
-      case Mode::kDec:
-         return "dec";
-         break;
-      case Mode::kHex:
-         return "hex";
-         break;
-      case Mode::kBin:
-         return "bin";
-         break;
-      }
-      return "";
+      return intbase::as_string(mode);
    }
    char const* KeybindString() const override {
       return m_keybind_string;

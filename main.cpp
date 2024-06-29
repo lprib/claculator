@@ -13,11 +13,13 @@ int main(void) {
 
    const int screenWidth = 800;
    const int screenHeight = 450;
+   SetConfigFlags(FLAG_WINDOW_RESIZABLE);
    InitWindow(
       screenWidth,
       screenHeight,
       "raylib [core] example - basic window"
    );
+   SetWindowMinSize(screenWidth, screenHeight);
    SetTargetFPS(60);
    SetExitKey(0);
    while(!WindowShouldClose()) {
