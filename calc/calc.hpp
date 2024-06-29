@@ -26,11 +26,11 @@ struct State {
    Stack speculative_stack;
    bool speculate_poisoned = false;
 
-   void Speculate(std::vector<parse::Token> const& tokens);
+   void Speculate(std::vector<parse::Token>& tokens);
    void Commit();
 
 private:
-   void SpeculateToken(parse::Token const& token);
+   void SpeculateToken(parse::Token& token);
    bool CheckSpecStackSize(std::size_t size);
 };
 

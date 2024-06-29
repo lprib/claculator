@@ -4,10 +4,10 @@
 #include <variant>
 
 namespace calc {
-void State::Speculate(std::vector<parse::Token> const& tokens) {
+void State::Speculate(std::vector<parse::Token>& tokens) {
    speculate_poisoned = false;
    speculative_stack = committed_stack;
-   for(auto const& token : tokens) {
+   for(auto& token : tokens) {
       SpeculateToken(token);
    }
 }
@@ -24,9 +24,10 @@ bool State::CheckSpecStackSize(std::size_t size) {
    }
 }
 
-void State::SpeculateToken(parse::Token const& token) {
-   if(speculate_poisoned)
+void State::SpeculateToken(parse::Token& token) {
+   if(speculate_poisoned) {
       return;
+   }
 
    switch(token.type) {
    case parse::TokenType::kDecimalNumber:
@@ -39,8 +40,10 @@ void State::SpeculateToken(parse::Token const& token) {
 
 #define BINOP_CASE(_token_enum, _op) \
    case parse::BuiltinOperation::_token_enum: { \
-      if(!CheckSpecStackSize(2)) \
+      if(!CheckSpecStackSize(2)) { \
+         token.into_error("stack underflow"); \
          return; \
+      } \
       auto r = speculative_stack.pop(); \
       auto l = speculative_stack.pop(); \
       speculative_stack.push(l _op r); \
@@ -60,6 +63,7 @@ void State::SpeculateToken(parse::Token const& token) {
 
       case parse::BuiltinOperation::kInv: {
          if(!CheckSpecStackSize(1)) {
+            token.into_error("stack underflow");
             speculate_poisoned = true;
             return;
          }

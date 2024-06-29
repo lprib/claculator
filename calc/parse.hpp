@@ -65,6 +65,10 @@ public:
       return Token(start, end, TokenType::kError, kDefaultBuiltinOperation, 0, std::move(text));
    }
 
+   void into_error(std::string text) {
+      *this = Token::make_error(span.start, span.end, std::move(text));
+   }
+
    TextSpan span;
    TokenType type;
 
