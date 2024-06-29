@@ -70,16 +70,25 @@ struct Parser {
          return std::nullopt;
       }
 
-      auto tok =
-         Token::make_word(current_index, current_index + n_chars, remaining().substr(0, n_chars));
+      auto tok = Token::make_error(current_index, current_index + n_chars, "undefined word");
+      for(auto const& defd_word : settings.defined_words) {
+         if(defd_word == remaining().substr(0, n_chars)) {
+            tok = Token::make_word(
+               current_index,
+               current_index + n_chars,
+               remaining().substr(0, n_chars)
+            );
+         }
+      }
+
       current_index += n_chars;
       return tok;
    }
 
    static constexpr std::string_view kNumericChars = "0123456789abcdef";
    std::optional<Token> number(intbase::IntBase base) {
-      auto int_base = intbase::as_int(base);
-      if(size_t{int_base} > kNumericChars.size()) {
+      size_t int_base = static_cast<size_t>(intbase::as_int(base));
+      if(int_base > kNumericChars.size()) {
          return std::nullopt;
       }
 

@@ -1,5 +1,6 @@
 #include "raylib.h"
 
+#include "textspan.hpp"
 #include "view/BitfieldDisplay.hpp"
 #include "view/style.hpp"
 #include "view/view.hpp"
@@ -7,6 +8,7 @@
 #include <charconv>
 #include <cmath>
 #include <iostream>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -24,29 +26,96 @@ static constexpr int letter_spacing() {
 
 static constexpr float kBlinkPeriod = 0.5;
 
-static void single_line_textbox(
-   int x, int y, int w, std::string const& str, int font_size, Color outline,
-   Color fill, Color text, Color highlight = MAGENTA, int highlighted_index = -1
-) {
+struct SpanDescription {
+   TextSpan span;
+   Color color;
+   std::string popup;
+   SpanDescription(TextSpan _span, Color _color, std::string _popup = "") :
+      span(_span),
+      color(_color),
+      popup(_popup) {}
+};
+
+static void textbox_background(int x, int y, int w, int font_size, Color outline, Color fill) {
    DrawRectangleLines(x, y, w, font_size + 4, outline);
    DrawRectangle(x + 1, y + 1, w - 2, font_size + 4 - 2, fill);
-   auto hpad = font_size / 8;
-   DrawText(str.c_str(), x + 2 + hpad, y + 2, font_size, text);
+}
+
+static std::optional<Color> get_color(int char_index, std::vector<SpanDescription> const& spans) {
+   for(auto const& span_desc : spans) {
+      if(span_desc.span.contains(char_index)) {
+         return span_desc.color;
+      }
+   }
+   return std::nullopt;
+}
+
+static std::optional<std::string> get_popup(
+   int char_index, std::vector<SpanDescription> const& spans
+) {
+   for(auto const& span_desc : spans) {
+      if((span_desc.span.start == char_index) && (span_desc.popup != "")) {
+         return span_desc.popup;
+      }
+   }
+   return std::nullopt;
+}
+
+static void single_line_textbox(
+   int x, int y, int w, std::string const& str, int font_size, Color outline, Color fill, Color text
+) {
+   textbox_background(x, y, w, font_size, outline, fill);
+   DrawText(str.c_str(), x + 2 + font_size / 8, y + 2, font_size, text);
+}
+
+static void rich_text_box(
+   int x, int y, int w, std::string const& str, int font_size, Color outline, Color fill,
+   Color text_default, Color highlight, int highlighted_index,
+   std::vector<SpanDescription> const& spans
+) {
+   textbox_background(x, y, w, font_size, outline, fill);
+
+   int xoffset = x + 2 + font_size / 8;
+   for(int char_i = 0; char_i < str.size(); ++char_i) {
+      char cstr[2] = {str[char_i], 0};
+      DrawText(cstr, xoffset, y + 2, font_size, get_color(char_i, spans).value_or(text_default));
+      auto popup = get_popup(char_i, spans);
+      if(popup.has_value()) {
+         static constexpr int kPopupVertPad = 10;
+         auto popup_c_str = popup->c_str();
+         single_line_textbox(
+            xoffset,
+            y - kDefaultStyle.small_font - 4 - kPopupVertPad,
+            MeasureText(popup_c_str, kDefaultStyle.small_font) + 6,
+            popup_c_str,
+            kDefaultStyle.small_font,
+            kDefaultStyle.dark_text,
+            kDefaultStyle.dark_bg,
+            kDefaultStyle.dark_text
+         );
+
+         static constexpr int kTriangleSize = 10;
+         auto a = Vector2(xoffset + kTriangleSize / 2, y - kPopupVertPad + kTriangleSize / 1.414);
+         auto b = Vector2(xoffset + kTriangleSize, y - kPopupVertPad);
+         auto c = Vector2(xoffset, y - kPopupVertPad);
+         DrawTriangle(a, b, c, kDefaultStyle.dark_text);
+      }
+      xoffset += MeasureText(cstr, font_size) + font_size / 10;
+   }
 
    if(highlighted_index != -1) {
       auto pre_str = str.substr(0, highlighted_index);
       auto port_str = str.substr(0, highlighted_index + 1);
       auto start = MeasureText(pre_str.c_str(), font_size);
-      auto end = highlighted_index >= str.size()
-                    ? start + 10 // default cursor width
-                    : MeasureText(port_str.c_str(), font_size);
+      auto end = highlighted_index >= str.size() ? start + 10 // default cursor width
+                                                 : MeasureText(port_str.c_str(), font_size);
 
       Color lerpHighlight = highlight;
       float lerp = (std::sin(GetTime() * 6.28 / kBlinkPeriod) + 1.0) / 2.0;
       lerpHighlight.a = (int)(lerp * (float)lerpHighlight.a);
 
       DrawRectangle(
-         x + start + 2 + hpad + letter_spacing() / 2,
+         x + start + 2 + font_size / 8 + letter_spacing() / 2,
          y + 2,
          end - start,
          font_size,
@@ -88,39 +157,51 @@ void View::render_history() {
    }
 }
 
+static std::vector<SpanDescription> tokens_to_span_desc(std::vector<parse::Token> const& tokens) {
+   auto spans = std::vector<SpanDescription>();
+   for(auto const& tok : tokens) {
+      switch(tok.type) {
+      case parse::TokenType::kDecimalNumber:
+         spans.push_back(SpanDescription(tok.span, to_dark_text_color(intbase::IntBase::kDec)));
+         break;
+      case parse::TokenType::kHexNumber:
+         spans.push_back(SpanDescription(tok.span, to_dark_text_color(intbase::IntBase::kHex)));
+         break;
+      case parse::TokenType::kBinaryNumber:
+         spans.push_back(SpanDescription(tok.span, to_dark_text_color(intbase::IntBase::kBin)));
+         break;
+      case parse::TokenType::kBuiltin:
+         spans.push_back(SpanDescription(tok.span, BLUE));
+         break;
+      case parse::TokenType::kWord:
+         break;
+      case parse::TokenType::kError:
+         spans.push_back(SpanDescription(tok.span, RED, tok.text));
+         break;
+      }
+   }
+
+   return spans;
+}
+
 void View::render_main_input() {
    auto highlight = Color{0xff, 0xff, 0xff, 0x80};
-   auto is_infix = m_vm.fix_mode.mode == FixMode::Mode::kInfix;
+   static constexpr int kPadding = 5;
+   auto y = GetScreenHeight() - bigfont_textbox_height() - smallfont_textbox_height() - kPadding;
 
-   auto x = is_infix ? 20 : 0;
-   auto w = GetScreenWidth() - (is_infix ? 40 : 0);
-
-   auto y =
-      GetScreenHeight() - bigfont_textbox_height() - smallfont_textbox_height();
-
-   single_line_textbox(
-      x,
+   rich_text_box(
+      5,
       y,
-      w,
+      GetScreenWidth() - kPadding * 2,
       m_vm.current_input.c_str(),
       kDefaultStyle.big_font,
-      is_infix ? kDefaultStyle.fg_mid : kDefaultStyle.bg1_dark,
-      kDefaultStyle.fg_dark,
-      kDefaultStyle.bg1_light,
+      SKYBLUE,
+      kDefaultStyle.dark_bg,
+      kDefaultStyle.dark_text,
       highlight,
-      m_vm.highlighted_index
+      m_vm.highlighted_index,
+      tokens_to_span_desc(m_vm.parsed)
    );
-
-   if(is_infix) {
-      DrawText("(", 5, y + 2, kDefaultStyle.big_font, kDefaultStyle.fg_mid);
-      DrawText(
-         ")",
-         GetScreenWidth() - 15,
-         y + 2,
-         kDefaultStyle.big_font,
-         kDefaultStyle.fg_mid
-      );
-   }
 }
 
 struct ModeWidth {
@@ -129,37 +210,11 @@ struct ModeWidth {
 };
 
 void View::render_state_infobar() {
-   char const* mode_text;
-   Color outline, fill, text;
-   switch(m_vm.editor_mode.mode) {
-   case EditorMode::Mode::kInsert:
-      outline = kDefaultStyle.bg3_mid;
-      fill = kDefaultStyle.bg3_dark;
-      text = kDefaultStyle.bg2_light;
-      mode_text = "I";
-      break;
-   case EditorMode::Mode::kNormal:
-      outline = kDefaultStyle.bg1_mid;
-      fill = kDefaultStyle.bg1_dark;
-      text = kDefaultStyle.bg1_light;
-      mode_text = "N";
-      break;
-   }
-   int xoffset = 0;
-
-   single_line_textbox(
-      xoffset,
-      GetScreenHeight() - smallfont_textbox_height(),
-      30,
-      mode_text,
-      kDefaultStyle.small_font,
-      outline,
-      fill,
-      text
-   );
-   xoffset += 30;
+   static constexpr int kKeybindSize = 20;
+   static constexpr int kPadding = 10;
 
    std::vector<ModeWidth> modes = {
+      {&m_vm.editor_mode, 70},
       {&m_vm.input_display, 60},
       {&m_vm.output_display, 65},
       {&m_vm.sep_mode, 80},
@@ -167,19 +222,22 @@ void View::render_state_infobar() {
       {&m_vm.fix_mode, 50}
    };
 
+   int xoffset = 0;
+
    for(auto const& modewidth : modes) {
-      static constexpr int kKeybindSize = 20;
-      single_line_textbox(
-         xoffset,
-         GetScreenHeight() - smallfont_textbox_height(),
-         kKeybindSize,
-         modewidth.mode->KeybindString(),
-         kDefaultStyle.small_font,
-         kDefaultStyle.bg2_mid,
-         kDefaultStyle.bg2_dark,
-         kDefaultStyle.bg2_light
-      );
-      xoffset += kKeybindSize;
+      if(modewidth.mode->ShowKeybind()) {
+         single_line_textbox(
+            xoffset,
+            GetScreenHeight() - smallfont_textbox_height(),
+            kKeybindSize,
+            modewidth.mode->KeybindString(),
+            kDefaultStyle.small_font,
+            kDefaultStyle.dark_text,
+            kDefaultStyle.dark_bg,
+            kDefaultStyle.dark_text
+         );
+         xoffset += kKeybindSize;
+      }
 
       single_line_textbox(
          xoffset,
@@ -187,11 +245,11 @@ void View::render_state_infobar() {
          modewidth.width,
          modewidth.mode->DisplayString(),
          kDefaultStyle.small_font,
-         kDefaultStyle.bg1_mid,
-         kDefaultStyle.bg1_dark,
-         kDefaultStyle.bg1_light
+         modewidth.mode->BgColor(),
+         modewidth.mode->BgColor(),
+         modewidth.mode->TextColor()
       );
-      xoffset += modewidth.width;
+      xoffset += modewidth.width + kPadding;
    }
 }
 
@@ -206,8 +264,6 @@ void View::render() {
       0,
       GetScreenHeight() - 300,
       m_vm.currentRegister,
-      m_vm.state.speculative_stack.data.empty()
-         ? 0
-         : m_vm.state.speculative_stack.data.back()
+      m_vm.state.speculative_stack.data.empty() ? 0 : m_vm.state.speculative_stack.data.back()
    );
 }

@@ -19,13 +19,10 @@ inline char const* as_string(IntBase base) {
    switch(base) {
    case IntBase::kDec:
       return "dec";
-      break;
    case IntBase::kHex:
       return "hex";
-      break;
    case IntBase::kBin:
       return "bin";
-      break;
    default:
       return "";
    }

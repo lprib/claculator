@@ -1,6 +1,7 @@
 #pragma once
 
 #include "calc/intbase.hpp"
+#include "textspan.hpp"
 
 #include <cstdint>
 #include <ostream>
@@ -64,8 +65,7 @@ public:
       return Token(start, end, TokenType::kError, kDefaultBuiltinOperation, 0, std::move(text));
    }
 
-   size_t start;
-   size_t end;
+   TextSpan span;
    TokenType type;
 
    BuiltinOperation builtin;
@@ -73,7 +73,7 @@ public:
    std::string text;
 
    size_t length() {
-      return end - start;
+      return span.end - span.start;
    }
 
    bool is_integer() {
@@ -154,8 +154,7 @@ private:
       size_t _start, size_t _end, TokenType _type, BuiltinOperation _builtin, int64_t _number,
       std::string _text = ""
    ) :
-      start(_start),
-      end(_end),
+      span(_start, _end),
       type(_type),
       builtin(_builtin),
       number(_number),
@@ -163,10 +162,15 @@ private:
 };
 
 struct ParserSettings {
-   ParserSettings(intbase::IntBase _default_numeric_base) :
-      default_numeric_base(_default_numeric_base) {}
+   ParserSettings(
+      intbase::IntBase _default_numeric_base,
+      std::vector<std::string> _defined_words = std::vector<std::string>()
+   ) :
+      default_numeric_base(_default_numeric_base),
+      defined_words(std::move(_defined_words)) {}
 
    intbase::IntBase default_numeric_base;
+   std::vector<std::string> defined_words;
 };
 
 std::vector<Token> parse(ParserSettings const& settings, std::string_view input);

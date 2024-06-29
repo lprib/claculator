@@ -3,6 +3,8 @@
 #include "calc/bit_register.hpp"
 #include "calc/calc.hpp"
 #include "raylib.h"
+#include "view/style.hpp"
+#include <optional>
 #include <vector>
 
 class EnumeratedMode {
@@ -14,6 +16,15 @@ public:
    // TODO auto dislpay this
    virtual char const* KeybindString() const = 0;
    virtual void Rotate() = 0;
+   virtual Color BgColor() const {
+      return kDefaultStyle.dark_bg;
+   }
+   virtual Color TextColor() const {
+      return kDefaultStyle.dark_text;
+   }
+   virtual bool ShowKeybind() const {
+      return true;
+   }
 
 protected:
    template <typename T> void EnumRotate(T& value, T max) {
@@ -32,9 +43,9 @@ struct EditorMode : public EnumeratedMode {
    char const* DisplayString() const override {
       switch(mode) {
       case Mode::kInsert:
-         return "I";
+         return "INS";
       case Mode::kNormal:
-         return "N";
+         return "NOR";
       }
       return "";
    }
@@ -43,6 +54,20 @@ struct EditorMode : public EnumeratedMode {
    }
    void Rotate() override {
       EnumRotate(mode, Mode::kNormal);
+   }
+
+   bool insert() const {
+      return mode == Mode::kInsert;
+   }
+
+   Color BgColor() const override {
+      return insert() ? kDefaultStyle.light_bg : kDefaultStyle.dark_bg;
+   }
+   Color TextColor() const override {
+      return insert() ? DARKBLUE : kDefaultStyle.dark_text;
+   }
+   bool ShowKeybind() const override {
+      return false;
    }
 };
 
@@ -67,7 +92,7 @@ struct SeparatorMode : public EnumeratedMode {
       return "";
    }
    char const* KeybindString() const override {
-      return "S";
+      return "s";
    }
    void Rotate() override {
       EnumRotate(mode, Mode::kEight);
@@ -106,6 +131,10 @@ struct NumericDisplayMode : public EnumeratedMode {
    void Rotate() override {
       EnumRotate(mode, Mode::kBin);
    }
+
+   Color TextColor() const override {
+      return to_dark_text_color(mode);
+   }
 };
 
 struct IntWidthMode : public EnumeratedMode {
@@ -129,7 +158,7 @@ struct IntWidthMode : public EnumeratedMode {
       return "";
    }
    char const* KeybindString() const override {
-      return "W";
+      return "w";
    }
    void Rotate() override {
       EnumRotate(mode, Mode::k64);
@@ -164,7 +193,7 @@ struct FixMode : public EnumeratedMode {
       return "";
    }
    char const* KeybindString() const override {
-      return "R";
+      return "r";
    }
    void Rotate() override {
       EnumRotate(mode, Mode::kPostfix);
@@ -177,6 +206,7 @@ extern RegisterDisplay test_register;
 class ViewModel {
 public:
    std::string current_input;
+   std::vector<parse::Token> parsed;
    int highlighted_index = 0;
 
    calc::State state;
@@ -185,8 +215,8 @@ public:
    int history_highlighted_index = 0;
 
    EditorMode editor_mode;
-   NumericDisplayMode input_display{"Z"};
-   NumericDisplayMode output_display{"X"};
+   NumericDisplayMode input_display{"z"};
+   NumericDisplayMode output_display{"x"};
    SeparatorMode sep_mode;
    IntWidthMode int_width;
    FixMode fix_mode;

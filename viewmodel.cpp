@@ -154,7 +154,7 @@ std::string ViewModel::GetStackDisplayString(int index) {
 }
 
 void ViewModel::OnInputChanged(bool reset_history_highlight) {
-   auto parsed = parse::parse(parse::ParserSettings(input_display.mode), current_input);
+   parsed = parse::parse(parse::ParserSettings(input_display.mode), current_input);
    state.Speculate(parsed);
    if(reset_history_highlight) {
       history_highlighted_index = history.size();

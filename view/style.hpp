@@ -1,5 +1,6 @@
 #pragma once
 
+#include "calc/intbase.hpp"
 #include "raylib.h"
 
 class Style {
@@ -28,6 +29,19 @@ public:
    Color light_text;
    Color highlight;
 };
+
+inline Color to_dark_text_color(intbase::IntBase base) {
+   switch(base) {
+   case intbase::IntBase::kDec:
+      return SKYBLUE;
+   case intbase::IntBase::kHex:
+      return LIME;
+   case intbase::IntBase::kBin:
+      return YELLOW;
+   default:
+      return WHITE;
+   }
+}
 
 // constexpr Style kDefaultStyle = {
 //    30,
