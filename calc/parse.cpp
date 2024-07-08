@@ -61,7 +61,7 @@ struct Parser {
       while(((current_index + n_chars) < input.size()) &&
             (kWhitespaceChars.find(remaining()[n_chars]) == std::string_view::npos)) {
          // stop early for super precedence
-         if(super_precedence_word(true, n_chars).has_value()) {
+         if(super_precedence_word(true, true, n_chars).has_value()) {
             break;
          }
          ++n_chars;
@@ -90,6 +90,8 @@ struct Parser {
 
    static constexpr std::string_view kNumericChars = "0123456789abcdef";
    std::optional<Token> number(intbase::IntBase base) {
+      bool negate = prefix("-");
+
       size_t int_base = static_cast<size_t>(intbase::as_int(base));
       if(int_base > kNumericChars.size()) {
          return std::nullopt;
@@ -103,6 +105,10 @@ struct Parser {
          ++n_chars;
       }
       if(n_chars == 0) {
+         // hack: undo the `prefix("-")` done above since we didn't find any numbers
+         if(negate) {
+            current_index--;
+         }
          return std::nullopt;
       }
 
@@ -130,13 +136,24 @@ struct Parser {
          digit_mul *= int_base;
       }
 
-      auto tok = Token::make_integer(current_index, current_index + n_chars, base, number);
+      auto tok = Token::make_integer(
+         current_index - (negate ? 1 : 0), // include minus sign
+         current_index + n_chars,
+         base,
+         // TODO overflow
+         negate ? -1 * number : number
+      );
       current_index += n_chars;
       return tok;
    }
 
    std::optional<Token> default_number() {
       return number(settings.default_numeric_base);
+   }
+
+   std::optional<Token> floating_number() {
+      // std::string_view base_chars = kNumericChars.substr(0, int_base);
+      return std::nullopt;
    }
 
    std::optional<Token> generic_prefixed_number(std::string_view pre, intbase::IntBase base) {
@@ -159,8 +176,14 @@ struct Parser {
       return generic_prefixed_number("0i"sv, intbase::IntBase::kDec);
    }
 
-   std::optional<Token> test_for_super_precedence(std::string_view c, size_t start) {
+   std::optional<Token> test_for_super_precedence(
+      std::string_view c, size_t start, bool ignore_negation
+   ) {
       for(size_t i = 0; i < settings.functions.size(); ++i) {
+         // negation parsing hack!
+         if(ignore_negation && settings.functions[i]->name() == "-") {
+            continue;
+         }
          if(settings.functions[i]->super_precedence()) {
             auto const& name = settings.functions[i]->name();
             if(c.rfind(name, 0) == 0) {
@@ -171,9 +194,15 @@ struct Parser {
       return std::nullopt;
    }
 
-   std::optional<Token> super_precedence_word(bool lookahead, int offset = 0) {
+   std::optional<Token> super_precedence_word(bool lookahead, bool ignore_negation, int offset = 0) {
       auto index_offset = current_index + offset;
-      auto tok = test_for_super_precedence(input.substr(current_index + offset), index_offset);
+      // ignore_negation == !lookahead. If we are just looking for a
+      // superprecedence word within another word (ie lookahead is true), we
+      // shouldn't ignore negation. If we are looking at a toplevel token, we
+      // should ignore negation as it may be used as a negative integer rather
+      // than an operator
+      auto tok =
+         test_for_super_precedence(input.substr(current_index + offset), index_offset, ignore_negation);
       if(lookahead) {
          return tok;
       } else {
@@ -187,7 +216,7 @@ struct Parser {
    std::optional<Token> next_token() {
       (void)skip_whitespace();
 
-      auto maybe = super_precedence_word(false);
+      auto maybe = super_precedence_word(false, true);
       if(maybe.has_value()) {
          return *maybe;
       }
@@ -200,6 +229,10 @@ struct Parser {
          return *maybe;
       }
       maybe = prefixed_dec_number();
+      if(maybe.has_value()) {
+         return *maybe;
+      }
+      maybe = floating_number();
       if(maybe.has_value()) {
          return *maybe;
       }
