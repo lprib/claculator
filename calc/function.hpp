@@ -34,11 +34,9 @@ public:
    virtual ExecutionResult execute(std::vector<std::int64_t> input) = 0;
 };
 
-class SimpleBinaryArithmeticFunction : public Function {
+class BinaryArithmeticFunction : public Function {
 public:
-   using FunctionType = std::int64_t (*)(std::int64_t, std::int64_t);
-
-   SimpleBinaryArithmeticFunction(char const* name, FunctionType fn) : m_name(name), m_fn(fn) {}
+   BinaryArithmeticFunction(char const* name) : m_name(name) {}
 
    std::string_view name() const override {
       return m_name;
@@ -52,12 +50,23 @@ public:
       return true;
    }
 
+private:
+   char const* m_name;
+};
+
+class SimpleBinaryArithmeticFunction : public BinaryArithmeticFunction {
+public:
+   using FunctionType = std::int64_t (*)(std::int64_t, std::int64_t);
+
+   SimpleBinaryArithmeticFunction(char const* name, FunctionType fn) :
+      BinaryArithmeticFunction(name),
+      m_fn(fn) {}
+
    ExecutionResult execute(std::vector<std::int64_t> input) override {
       return ExecutionResult::make_success(std::vector<std::int64_t>{m_fn(input[0], input[1])});
    }
 
 private:
-   char const* m_name;
    FunctionType m_fn;
 };
 

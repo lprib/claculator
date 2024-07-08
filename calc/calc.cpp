@@ -9,16 +9,9 @@
 
 namespace calc {
 
-class DivideFunction : public Function {
-   std::string_view name() const override {
-      return "/";
-   }
-   size_t arity() const override {
-      return 2;
-   }
-   bool super_precedence() const override {
-      return true;
-   }
+class DivideFunction : public BinaryArithmeticFunction {
+public:
+   DivideFunction() : BinaryArithmeticFunction("/") {}
    Function::ExecutionResult execute(std::vector<std::int64_t> input) override {
       if(input[1] == 0) {
          return ExecutionResult::make_error("div by zero");

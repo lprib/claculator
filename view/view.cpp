@@ -181,7 +181,7 @@ static std::vector<SpanDescription> tokens_to_span_desc(std::vector<parse::Token
          spans.push_back(SpanDescription(tok.span, to_dark_text_color(intbase::IntBase::kBin)));
          break;
       case parse::TokenType::kWord:
-         spans.push_back(SpanDescription(tok.span, kDefaultStyle.dark_text));
+         spans.push_back(SpanDescription(tok.span, kDefaultStyle.dark_text_emphasis));
          break;
       case parse::TokenType::kError:
          spans.push_back(SpanDescription(tok.span, RED, tok.text));
