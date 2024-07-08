@@ -6,7 +6,8 @@
 #include <iostream>
 
 // temp for test
-RegisterDisplay test_register(std::vector<Field>{Field(0, 1, "TEST", FieldDisplay::kNumeric)});
+// RegisterDisplay test_register(std::vector<Field>{Field(0, 1, "TEST", FieldDisplay::kNumeric)});
+RegisterDisplay test_register(std::vector<Field>{});
 
 void ViewModel::OnCharPressed(int chr) {
    switch(editor_mode.mode) {
