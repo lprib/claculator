@@ -119,7 +119,7 @@ void ViewModel::OnKeyPressed(KeyboardKey k) {
       switch(k) {
       case KEY_BACKSPACE:
          if(!current_input.empty()) {
-            auto to_delete = highlighted_index - 1;
+            auto to_delete = static_cast<int>(highlighted_index) - 1;
             if(to_delete >= 0) {
                current_input.erase(to_delete, 1);
                --highlighted_index;

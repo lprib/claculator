@@ -3,6 +3,7 @@
 #include <array>
 #include <cstdint>
 #include <functional>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -10,13 +11,24 @@ namespace calc {
 class Function {
 public:
    virtual std::string_view name() const = 0;
-   virtual int arity() const = 0;
+   virtual size_t arity() const = 0;
    /// @brief If true, this function should always be parsed, even if it is
    /// directly adjacent to integers or any other function names
    virtual bool super_precedence() const {
       return false;
    }
-   virtual std::vector<std::int64_t> execute(std::vector<std::int64_t> input) = 0;
+
+   struct ExecutionResult {
+      bool is_error;
+      std::vector<std::int64_t> returns;
+      std::string error;
+
+      static ExecutionResult success(std::vector<std::int64_t> returns) {
+         return ExecutionResult(false, std::move(returns), "");
+      }
+   };
+
+   virtual ExecutionResult execute(std::vector<std::int64_t> input) = 0;
 };
 
 class SimpleBinaryArithmeticFunction : public Function {
@@ -29,7 +41,7 @@ public:
       return m_name;
    }
 
-   int arity() const override {
+   size_t arity() const override {
       return 2;
    }
 
@@ -37,8 +49,8 @@ public:
       return true;
    }
 
-   std::vector<std::int64_t> execute(std::vector<std::int64_t> input) override {
-      return std::vector<std::int64_t>(m_fn(input[0], input[1]));
+   ExecutionResult execute(std::vector<std::int64_t> input) override {
+      return ExecutionResult::success(std::vector<std::int64_t>{m_fn(input[0], input[1])});
    }
 
 private:

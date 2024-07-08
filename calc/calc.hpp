@@ -37,6 +37,7 @@ public:
 
 private:
    void SpeculateToken(parse::Token& token);
+   void PoisionSpeculation();
    bool CheckSpecStackSize(std::size_t size);
 };
 

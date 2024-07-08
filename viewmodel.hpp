@@ -207,12 +207,12 @@ class ViewModel {
 public:
    std::string current_input;
    std::vector<parse::Token> parsed;
-   int highlighted_index = 0;
+   size_t highlighted_index = 0;
 
    calc::State state;
    std::vector<std::string> history;
 
-   int history_highlighted_index = 0;
+   size_t history_highlighted_index = 0;
 
    EditorMode editor_mode;
    NumericDisplayMode input_display{"z"};

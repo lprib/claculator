@@ -46,7 +46,7 @@ static void render_one_line(
       );
    }
 
-   for(int i = 0; i < display.fields.size(); ++i) {
+   for(size_t i = 0; i < display.fields.size(); ++i) {
       auto const& field = display.fields[i];
 
       auto first_oob = (field.firstbit >= (bitoffset + bitcount)) ||

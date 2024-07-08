@@ -41,7 +41,9 @@ static void textbox_background(int x, int y, int w, int font_size, Color outline
    DrawRectangle(x + 1, y + 1, w - 2, font_size + 4 - 2, fill);
 }
 
-static std::optional<Color> get_color(int char_index, std::vector<SpanDescription> const& spans) {
+static std::optional<Color> get_color(
+   size_t char_index, std::vector<SpanDescription> const& spans
+) {
    for(auto const& span_desc : spans) {
       if(span_desc.span.contains(char_index)) {
          return span_desc.color;
@@ -51,7 +53,7 @@ static std::optional<Color> get_color(int char_index, std::vector<SpanDescriptio
 }
 
 static std::optional<std::string> get_popup(
-   int char_index, std::vector<SpanDescription> const& spans
+   size_t char_index, std::vector<SpanDescription> const& spans
 ) {
    for(auto const& span_desc : spans) {
       if((span_desc.span.start == char_index) && (span_desc.popup != "")) {
@@ -76,7 +78,7 @@ static void rich_text_box(
    textbox_background(x, y, w, font_size, outline, fill);
 
    int xoffset = x + 2 + font_size / 8;
-   for(int char_i = 0; char_i < str.size(); ++char_i) {
+   for(size_t char_i = 0; char_i < str.size(); ++char_i) {
       char cstr[2] = {str[char_i], 0};
       DrawText(cstr, xoffset, y + 2, font_size, get_color(char_i, spans).value_or(text_default));
       auto popup = get_popup(char_i, spans);
@@ -107,8 +109,9 @@ static void rich_text_box(
       auto pre_str = str.substr(0, highlighted_index);
       auto port_str = str.substr(0, highlighted_index + 1);
       auto start = MeasureText(pre_str.c_str(), font_size);
-      auto end = highlighted_index >= str.size() ? start + 10 // default cursor width
-                                                 : MeasureText(port_str.c_str(), font_size);
+      auto end = static_cast<size_t>(highlighted_index) >= str.size()
+                    ? start + 10 // default cursor width
+                    : MeasureText(port_str.c_str(), font_size);
 
       Color lerpHighlight = highlight;
       float lerp = (std::sin(GetTime() * 6.28 / kBlinkPeriod) + 1.0) / 2.0;
@@ -141,7 +144,7 @@ void View::render_stack() {
 }
 
 void View::render_history() {
-   for(std::size_t i = 0; i < m_vm.history.size(); ++i) {
+   for(size_t i = 0; i < m_vm.history.size(); ++i) {
       auto data = m_vm.history[i].c_str();
       auto is_highlighted = m_vm.history_highlighted_index == i;
       single_line_textbox(
@@ -169,9 +172,6 @@ static std::vector<SpanDescription> tokens_to_span_desc(std::vector<parse::Token
          break;
       case parse::TokenType::kBinaryNumber:
          spans.push_back(SpanDescription(tok.span, to_dark_text_color(intbase::IntBase::kBin)));
-         break;
-      case parse::TokenType::kBuiltin:
-         spans.push_back(SpanDescription(tok.span, kDefaultStyle.dark_text_emphasis));
          break;
       case parse::TokenType::kWord:
          spans.push_back(SpanDescription(tok.span, kDefaultStyle.dark_text));

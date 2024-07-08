@@ -17,7 +17,6 @@ enum class TokenType {
    kDecimalNumber,
    kHexNumber,
    kBinaryNumber,
-   kBuiltin,
    kWord,
    kError,
 };
@@ -36,7 +35,6 @@ enum class BuiltinOperation {
    kShr,
    kShl
 };
-static constexpr BuiltinOperation kDefaultBuiltinOperation = BuiltinOperation::kAdd;
 
 class Token {
 public:
@@ -55,27 +53,27 @@ public:
       default:
          break;
       }
-      return Token(start, end, type, kDefaultBuiltinOperation, n);
+      return Token(start, end, type, n, 0, "");
    }
-   static Token make_builtin(size_t start, size_t end, BuiltinOperation builtin) {
-      return Token(start, end, TokenType::kBuiltin, builtin, 0);
-   }
-   static Token make_word(size_t start, size_t end, std::string_view word) {
-      return Token(start, end, TokenType::kWord, kDefaultBuiltinOperation, 0, std::string(word));
+   static Token make_word(size_t start, size_t end, int index, std::string_view word) {
+      return Token(start, end, TokenType::kWord, 0, index, std::string(word));
    }
    static Token make_error(size_t start, size_t end, std::string text) {
-      return Token(start, end, TokenType::kError, kDefaultBuiltinOperation, 0, std::move(text));
+      return Token(start, end, TokenType::kError, 0, 0, std::move(text));
    }
 
-   void into_error(std::string text) {
-      *this = Token::make_error(span.start, span.end, std::move(text));
+   void into_error(std::string error_text) {
+      *this = Token::make_error(span.start, span.end, std::move(error_text));
    }
 
    TextSpan span;
    TokenType type;
 
-   BuiltinOperation builtin;
+   /// @brief used for kDecimalNumber, kHexNumber, kBinaryNumber
    int64_t number;
+   /// @brief used for kWord
+   size_t function_index;
+   /// @brief used for kWord, kError
    std::string text;
 
    size_t length() {
@@ -104,47 +102,6 @@ public:
       case TokenType::kBinaryNumber:
          o << "bin:" << tok.number;
          break;
-      case TokenType::kBuiltin:
-         o << "builtin:";
-         switch(tok.builtin) {
-         case BuiltinOperation::kAdd:
-            o << "+";
-            break;
-         case BuiltinOperation::kSub:
-            o << "-";
-            break;
-         case BuiltinOperation::kMul:
-            o << "*";
-            break;
-         case BuiltinOperation::kDiv:
-            o << "/";
-            break;
-         case BuiltinOperation::kIntDiv:
-            o << "//";
-            break;
-         case BuiltinOperation::kMod:
-            o << "%";
-            break;
-         case BuiltinOperation::kAnd:
-            o << "&";
-            break;
-         case BuiltinOperation::kOr:
-            o << "|";
-            break;
-         case BuiltinOperation::kXor:
-            o << "^";
-            break;
-         case BuiltinOperation::kInv:
-            o << "~";
-            break;
-         case BuiltinOperation::kShr:
-            o << ">>";
-            break;
-         case BuiltinOperation::kShl:
-            o << "<<";
-            break;
-         }
-         break;
       case TokenType::kWord:
          o << "word:" << tok.text;
          break;
@@ -157,13 +114,13 @@ public:
 
 private:
    Token(
-      size_t _start, size_t _end, TokenType _type, BuiltinOperation _builtin, int64_t _number,
-      std::string _text = ""
+      size_t _start, size_t _end, TokenType _type, int64_t _number, size_t _function_index,
+      std::string _text
    ) :
       span(_start, _end),
       type(_type),
-      builtin(_builtin),
       number(_number),
+      function_index(_function_index),
       text(_text) {}
 };
 

@@ -60,8 +60,8 @@ struct Parser {
       int n_chars = 0;
       while(((current_index + n_chars) < input.size()) &&
             (kWhitespaceChars.find(remaining()[n_chars]) == std::string_view::npos)) {
-         // stop early for builtin
-         if(builtin(true, n_chars).has_value()) {
+         // stop early for super precedence
+         if(super_precedence_word(true, n_chars).has_value()) {
             break;
          }
          ++n_chars;
@@ -71,13 +71,16 @@ struct Parser {
       }
 
       auto tok = Token::make_error(current_index, current_index + n_chars, "undefined word");
-      for(auto const& defd_word : settings.defined_words) {
-         if(defd_word == remaining().substr(0, n_chars)) {
+
+      for(size_t i = 0; i < settings.functions.size(); ++i) {
+         if(settings.functions[i]->name() == remaining().substr(0, n_chars)) {
             tok = Token::make_word(
                current_index,
                current_index + n_chars,
+               i,
                remaining().substr(0, n_chars)
             );
+            break;
          }
       }
 
@@ -156,52 +159,21 @@ struct Parser {
       return generic_prefixed_number("0i"sv, intbase::IntBase::kDec);
    }
 
-   std::optional<Token> builtin_from_chars(std::string_view c, size_t start) {
-      if(c.size() < 1) {
-         return std::nullopt;
-      }
-      switch(c[0]) {
-      case '+':
-         return Token::make_builtin(start, start + 1, BuiltinOperation::kAdd);
-      case '*':
-         return Token::make_builtin(start, start + 1, BuiltinOperation::kMul);
-      case '-':
-         return Token::make_builtin(start, start + 1, BuiltinOperation::kSub);
-      case '/':
-         if(c.size() >= 2 && c[1] == '/') {
-            return Token::make_builtin(start, start + 2, BuiltinOperation::kIntDiv);
-         } else {
-            return Token::make_builtin(start, start + 1, BuiltinOperation::kDiv);
+   std::optional<Token> test_for_super_precedence(std::string_view c, size_t start) {
+      for(size_t i = 0; i < settings.functions.size(); ++i) {
+         if(settings.functions[i]->super_precedence()) {
+            auto const& name = settings.functions[i]->name();
+            if(c.rfind(name, 0) == 0) {
+               return Token::make_word(start, start + name.size(), i, c.substr(0, name.size()));
+            }
          }
-      case '%':
-         return Token::make_builtin(start, start + 1, BuiltinOperation::kMod);
-      case '&':
-         return Token::make_builtin(start, start + 1, BuiltinOperation::kAnd);
-      case '|':
-         return Token::make_builtin(start, start + 1, BuiltinOperation::kOr);
-      case '^':
-         return Token::make_builtin(start, start + 1, BuiltinOperation::kXor);
-      case '~':
-         return Token::make_builtin(start, start + 1, BuiltinOperation::kInv);
-      case '>':
-         if(c.size() >= 2 && c[1] == '>') {
-            return Token::make_builtin(start, start + 2, BuiltinOperation::kShr);
-         }
-         break;
-      case '<':
-         if(c.size() >= 2 && c[1] == '<') {
-            return Token::make_builtin(start, start + 2, BuiltinOperation::kShl);
-         }
-         break;
-      default:
-         break;
       }
       return std::nullopt;
    }
 
-   std::optional<Token> builtin(bool lookahead, int offset = 0) {
+   std::optional<Token> super_precedence_word(bool lookahead, int offset = 0) {
       auto index_offset = current_index + offset;
-      auto tok = builtin_from_chars(input.substr(current_index + offset), index_offset);
+      auto tok = test_for_super_precedence(input.substr(current_index + offset), index_offset);
       if(lookahead) {
          return tok;
       } else {
@@ -215,7 +187,7 @@ struct Parser {
    std::optional<Token> next_token() {
       (void)skip_whitespace();
 
-      auto maybe = builtin(false);
+      auto maybe = super_precedence_word(false);
       if(maybe.has_value()) {
          return *maybe;
       }

@@ -35,6 +35,7 @@ if(NOT MSVC)
 	    $<$<COMPILE_LANGUAGE:CXX>:
 	    -Wall
 	    -Wextra
+		-Werror
 	    -Wcast-align
 	    -Wcast-qual
 	    -Wctor-dtor-privacy
