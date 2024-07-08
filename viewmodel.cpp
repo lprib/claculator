@@ -138,8 +138,8 @@ void ViewModel::OnKeyPressed(KeyboardKey k) {
 std::string ViewModel::GetStackDisplayString(int index) {
    std::array<char, 33> buf{};
    int base = intbase::as_int(output_display.mode);
-   std::to_chars(buf.begin(), buf.end(), state.speculative_stack.data[index], base);
-   auto str = std::string(buf.begin());
+   std::to_chars(&*buf.begin(), (&*buf.begin()) + buf.size(), state.speculative_stack.data[index], base);
+   auto str = std::string(&*buf.begin());
    if(sep_mode.mode != SeparatorMode::Mode::kNone) {
       int skipped = 1;
       for(int i = str.size() - 1; i > 0; --i) {

@@ -17,7 +17,7 @@ int main(void) {
    InitWindow(
       screenWidth,
       screenHeight,
-      "raylib [core] example - basic window"
+      "claculator"
    );
    SetWindowMinSize(screenWidth, screenHeight);
    SetTargetFPS(60);

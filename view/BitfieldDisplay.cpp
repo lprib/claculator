@@ -36,9 +36,9 @@ static void render_one_line(
       DrawRectangle(x + x_offset, y, info.bitbox_size, info.bitbox_size, bg);
 
       std::array<char, 10> buf{};
-      std::to_chars(buf.begin(), buf.end(), bit_index, 10);
+      std::to_chars(&*buf.begin(), (&*buf.begin()) + buf.size(), bit_index, 10);
       DrawText(
-         buf.begin(),
+         &*buf.begin(),
          x + x_offset + info.bitbox_size / 2 - kDefaultStyle.tiny_font / 2,
          y + info.bitbox_size / 2 - kDefaultStyle.tiny_font / 2,
          kDefaultStyle.tiny_font,

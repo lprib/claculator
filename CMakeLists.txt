@@ -27,30 +27,32 @@ target_include_directories(main PRIVATE .)
 target_compile_definitions(main PUBLIC __STDC_VERSION__=0)
 
 
-target_compile_options(main
-PRIVATE
-    $<$<COMPILE_LANGUAGE:CXX>:
-    -Wall
-    -Wextra
-    -Wcast-align
-    -Wcast-qual
-    -Wctor-dtor-privacy
-    -Wdisabled-optimization
-    -Wformat=2
-    -Winit-self
-    -Wlogical-op
-    -Wmissing-declarations
-    -Wmissing-include-dirs
-    -Woverloaded-virtual
-    -Wredundant-decls
-    -Wshadow
-    -Wsign-promo
-    -Wstrict-null-sentinel
-    -Wstrict-overflow=5
-    -Wswitch
-    -Wundef
-    >
-)
+if(NOT MSVC)
+	target_compile_options(main
+	PRIVATE
+	    $<$<COMPILE_LANGUAGE:CXX>:
+	    -Wall
+	    -Wextra
+	    -Wcast-align
+	    -Wcast-qual
+	    -Wctor-dtor-privacy
+	    -Wdisabled-optimization
+	    -Wformat=2
+	    -Winit-self
+	    -Wlogical-op
+	    -Wmissing-declarations
+	    -Wmissing-include-dirs
+	    -Woverloaded-virtual
+	    -Wredundant-decls
+	    -Wshadow
+	    -Wsign-promo
+	    -Wstrict-null-sentinel
+	    -Wstrict-overflow=5
+	    -Wswitch
+	    -Wundef
+	    >
+	)
+endif()
 
 
 target_link_libraries(main PRIVATE raylib)
