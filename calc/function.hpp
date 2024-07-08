@@ -23,8 +23,11 @@ public:
       std::vector<std::int64_t> returns;
       std::string error;
 
-      static ExecutionResult success(std::vector<std::int64_t> returns) {
+      static ExecutionResult make_success(std::vector<std::int64_t> returns) {
          return ExecutionResult(false, std::move(returns), "");
+      }
+      static ExecutionResult make_error(std::string error) {
+         return ExecutionResult(true, std::vector<std::int64_t>(), std::move(error));
       }
    };
 
@@ -50,7 +53,7 @@ public:
    }
 
    ExecutionResult execute(std::vector<std::int64_t> input) override {
-      return ExecutionResult::success(std::vector<std::int64_t>{m_fn(input[0], input[1])});
+      return ExecutionResult::make_success(std::vector<std::int64_t>{m_fn(input[0], input[1])});
    }
 
 private:

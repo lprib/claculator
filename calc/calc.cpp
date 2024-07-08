@@ -9,11 +9,36 @@
 
 namespace calc {
 
+class DivideFunction : public Function {
+   std::string_view name() const override {
+      return "/";
+   }
+   size_t arity() const override {
+      return 2;
+   }
+   bool super_precedence() const override {
+      return true;
+   }
+   Function::ExecutionResult execute(std::vector<std::int64_t> input) override {
+      if(input[1] == 0) {
+         return ExecutionResult::make_error("div by zero");
+      }
+      return ExecutionResult::make_success(std::vector<int64_t>{input[0] / input[1]});
+   }
+};
+
+#define SIMPLE_BIN_OP(op) \
+   fns.push_back(std::make_unique<calc::SimpleBinaryArithmeticFunction>(#op, [](auto a, auto b) { \
+      return a op b; \
+   }));
+
 static std::vector<std::unique_ptr<calc::Function>> MakeBuiltinFunctions() {
    std::vector<std::unique_ptr<calc::Function>> fns;
-   fns.push_back(std::make_unique<calc::SimpleBinaryArithmeticFunction>("+", [](auto a, auto b) {
-      return a + b;
-   }));
+   SIMPLE_BIN_OP(+);
+   SIMPLE_BIN_OP(-);
+   SIMPLE_BIN_OP(*);
+   SIMPLE_BIN_OP(%);
+   fns.push_back(std::make_unique<DivideFunction>());
    return fns;
 }
 
@@ -66,8 +91,8 @@ void State::SpeculateToken(parse::Token& token) {
       if(speculative_stack.data.size() < fn->arity()) {
          token.into_error(std::format(
             "stack underflow: require {}, got {}",
-            speculative_stack.data.size(),
-            fn->arity()
+            fn->arity(),
+            speculative_stack.data.size()
          ));
          PoisionSpeculation();
          return;
