@@ -255,27 +255,27 @@ std::vector<Token> parse(ParserSettings const& settings, std::string_view input)
 }
 
 void unit_test() {
-   std::cout << Parser("69420", ParserSettings(intbase::IntBase::kDec))
+   std::cout << Parser("69420", ParserSettings(intbase::IntBase::kDec, {}))
                    .number(intbase::IntBase::kDec)
                    ->number
              << "\n";
    assert(
-      Parser("69420", ParserSettings(intbase::IntBase::kDec))
+      Parser("69420", ParserSettings(intbase::IntBase::kDec, {}))
          .number(intbase::IntBase::kDec)
          ->number == 69420
    );
    assert(
-      Parser("12AB34CD56EF", ParserSettings(intbase::IntBase::kDec))
+      Parser("12AB34CD56EF", ParserSettings(intbase::IntBase::kDec, {}))
          .number(intbase::IntBase::kHex)
          ->number == 0x12AB34CD56EFLL
    );
    assert(
-      Parser("100101001110111010111011", ParserSettings(intbase::IntBase::kDec))
+      Parser("100101001110111010111011", ParserSettings(intbase::IntBase::kDec, {}))
          .number(intbase::IntBase::kBin)
          ->number == 0b100101001110111010111011LL
    );
 
-   auto settings = ParserSettings(intbase::IntBase::kDec);
+   auto settings = ParserSettings(intbase::IntBase::kDec, {});
    auto result = parse(settings, "123 0xff 0b1000 word*    3 4* 5 6<<>> abc//abc");
    for(auto token : result) {
       std::cout << token << " ";

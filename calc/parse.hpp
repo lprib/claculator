@@ -1,9 +1,11 @@
 #pragma once
 
+#include "calc/function.hpp"
 #include "calc/intbase.hpp"
 #include "textspan.hpp"
 
 #include <cstdint>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <string_view>
@@ -168,13 +170,13 @@ private:
 struct ParserSettings {
    ParserSettings(
       intbase::IntBase _default_numeric_base,
-      std::vector<std::string> _defined_words = std::vector<std::string>()
+      std::vector<std::unique_ptr<calc::Function>> const& _functions
    ) :
       default_numeric_base(_default_numeric_base),
-      defined_words(std::move(_defined_words)) {}
+      functions(_functions) {}
 
    intbase::IntBase default_numeric_base;
-   std::vector<std::string> defined_words;
+   std::vector<std::unique_ptr<calc::Function>> const& functions;
 };
 
 std::vector<Token> parse(ParserSettings const& settings, std::string_view input);

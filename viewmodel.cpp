@@ -139,7 +139,12 @@ void ViewModel::OnKeyPressed(KeyboardKey k) {
 std::string ViewModel::GetStackDisplayString(int index) {
    std::array<char, 33> buf{};
    int base = intbase::as_int(output_display.mode);
-   std::to_chars(&*buf.begin(), (&*buf.begin()) + buf.size(), state.speculative_stack.data[index], base);
+   std::to_chars(
+      &*buf.begin(),
+      (&*buf.begin()) + buf.size(),
+      state.speculative_stack.data[index],
+      base
+   );
    auto str = std::string(&*buf.begin());
    if(sep_mode.mode != SeparatorMode::Mode::kNone) {
       int skipped = 1;
@@ -155,7 +160,7 @@ std::string ViewModel::GetStackDisplayString(int index) {
 }
 
 void ViewModel::OnInputChanged(bool reset_history_highlight) {
-   parsed = parse::parse(parse::ParserSettings(input_display.mode), current_input);
+   parsed = parse::parse(parse::ParserSettings(input_display.mode, state.functions), current_input);
    state.Speculate(parsed);
    if(reset_history_highlight) {
       history_highlighted_index = history.size();

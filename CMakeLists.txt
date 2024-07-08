@@ -12,6 +12,8 @@ add_executable(main
     calc/calc.hpp
     calc/parse.cpp
     calc/parse.hpp
+	calc/function.cpp
+	calc/function.hpp
     main.cpp
     view/BitfieldDisplay.cpp
     view/BitfieldDisplay.hpp

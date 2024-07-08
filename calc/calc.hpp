@@ -1,8 +1,10 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <vector>
 
+#include "calc/function.hpp"
 #include "calc/parse.hpp"
 
 namespace calc {
@@ -21,10 +23,14 @@ struct Stack {
    }
 };
 
-struct State {
+class State {
+public:
+   State();
    Stack committed_stack;
    Stack speculative_stack;
    bool speculate_poisoned = false;
+
+   std::vector<std::unique_ptr<Function>> functions;
 
    void Speculate(std::vector<parse::Token>& tokens);
    void Commit();

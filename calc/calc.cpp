@@ -4,6 +4,11 @@
 #include <variant>
 
 namespace calc {
+State::State() :
+   functions{std::unique_ptr<SimpleBinaryArithmeticFunction>{
+      new SimpleBinaryArithmeticFunction("+", [](auto a, auto b) { return a + b; })
+   }} {}
+
 void State::Speculate(std::vector<parse::Token>& tokens) {
    speculate_poisoned = false;
    speculative_stack = committed_stack;
