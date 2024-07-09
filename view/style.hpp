@@ -29,6 +29,8 @@ public:
    Color light_bg;
    Color light_text;
    Color highlight;
+   Color syntax_double_color;
+   Color syntax_string_color;
 };
 
 inline Color to_dark_text_color(intbase::IntBase base) {
@@ -87,4 +89,6 @@ constexpr Style kDefaultStyle = {
    Color{0x79, 0x79, 0x79, 0xff},
    Color{0x14, 0x14, 0x14, 0xff},
    Color{0x1a, 0x3a, 0xac, 0xff},
+   PURPLE,
+   DARKBLUE,
 };

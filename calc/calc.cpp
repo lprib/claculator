@@ -1,5 +1,6 @@
 
 #include "calc/calc.hpp"
+#include "calc/value.hpp"
 
 #include <format>
 #include <iostream>
@@ -12,11 +13,14 @@ namespace calc {
 class DivideFunction : public BinaryArithmeticFunction {
 public:
    DivideFunction() : BinaryArithmeticFunction("/") {}
-   Function::ExecutionResult execute(std::vector<std::int64_t> input) override {
-      if(input[1] == 0) {
+   Function::ExecutionResult execute(std::vector<Value> input) override {
+      // TODO support doubles
+      if(input[1].int_or_default() == 0) {
          return ExecutionResult::make_error("div by zero");
       }
-      return ExecutionResult::make_success(std::vector<int64_t>{input[0] / input[1]});
+      return ExecutionResult::make_success(
+         std::vector<Value>{Value(int64_t{input[0].int_or_default() / input[1].int_or_default()})}
+      );
    }
 };
 
@@ -77,7 +81,9 @@ void State::SpeculateToken(parse::Token& token) {
    case parse::TokenType::kDecimalNumber:
    case parse::TokenType::kHexNumber:
    case parse::TokenType::kBinaryNumber:
-      speculative_stack.push(token.number);
+   case parse::TokenType::kDouble:
+   case parse::TokenType::kString:
+      speculative_stack.push(token.push_value);
       break;
    case parse::TokenType::kWord: {
       auto& fn = functions[token.function_index];
@@ -91,7 +97,7 @@ void State::SpeculateToken(parse::Token& token) {
          return;
       }
 
-      std::vector<std::int64_t> input;
+      std::vector<Value> input;
       size_t index = speculative_stack.data.size() - fn->arity();
       for(size_t i = 0; i < fn->arity(); ++i) {
          input.push_back(std::move(speculative_stack.data[index]));

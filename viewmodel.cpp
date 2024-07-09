@@ -3,6 +3,7 @@
 
 #include <array>
 #include <charconv>
+#include <format>
 #include <iostream>
 
 // temp for test
@@ -137,26 +138,37 @@ void ViewModel::OnKeyPressed(KeyboardKey k) {
 }
 
 std::string ViewModel::GetStackDisplayString(int index) {
-   std::array<char, 33> buf{};
-   int base = intbase::as_int(output_display.mode);
-   std::to_chars(
-      &*buf.begin(),
-      (&*buf.begin()) + buf.size(),
-      state.speculative_stack.data[index],
-      base
-   );
-   auto str = std::string(&*buf.begin());
-   if(sep_mode.mode != SeparatorMode::Mode::kNone) {
-      int skipped = 1;
-      for(int i = str.size() - 1; i > 0; --i) {
-         if(skipped == sep_mode.ToNumDigits()) {
-            str.insert(i, 1, ',');
-            skipped = 0;
+   calc::Value const& item = state.speculative_stack.data[index];
+   switch(item.type()) {
+   case calc::Value::Type::kInt: {
+      std::array<char, 33> buf{};
+      int base = intbase::as_int(output_display.mode);
+      std::to_chars(
+         &*buf.begin(),
+         (&*buf.begin()) + buf.size(),
+         state.speculative_stack.data[index].int_or_default(),
+         base
+      );
+      auto str = std::string(&*buf.begin());
+      if(sep_mode.mode != SeparatorMode::Mode::kNone) {
+         int skipped = 1;
+         for(int i = str.size() - 1; i > 0; --i) {
+            if(skipped == sep_mode.ToNumDigits()) {
+               str.insert(i, 1, ',');
+               skipped = 0;
+            }
+            ++skipped;
          }
-         ++skipped;
       }
+      return str;
+   }; break;
+   case calc::Value::Type::kDouble:
+      return std::format("{}", item.double_or_default());
+   case calc::Value::Type::kString:
+      return std::format("\"{}\"", item.string_or_default());
+   default:
+      return "";
    }
-   return str;
 }
 
 void ViewModel::OnInputChanged(bool reset_history_highlight) {

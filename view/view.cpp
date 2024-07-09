@@ -180,6 +180,12 @@ static std::vector<SpanDescription> tokens_to_span_desc(std::vector<parse::Token
       case parse::TokenType::kBinaryNumber:
          spans.push_back(SpanDescription(tok.span, to_dark_text_color(intbase::IntBase::kBin)));
          break;
+      case parse::TokenType::kDouble:
+         spans.push_back(SpanDescription(tok.span, kDefaultStyle.syntax_double_color));
+         break;
+      case parse::TokenType::kString:
+         spans.push_back(SpanDescription(tok.span, kDefaultStyle.syntax_string_color));
+         break;
       case parse::TokenType::kWord:
          spans.push_back(SpanDescription(tok.span, kDefaultStyle.dark_text_emphasis));
          break;
@@ -268,10 +274,11 @@ void View::render() {
    render_stack();
    render_history();
 
-   BitfieldDisplay::render(
-      0,
-      GetScreenHeight() - 300,
-      m_vm.currentRegister,
-      m_vm.state.speculative_stack.data.empty() ? 0 : m_vm.state.speculative_stack.data.back()
-   );
+   int bitfield = 0;
+   if(!m_vm.state.speculative_stack.data.empty() &&
+      m_vm.state.speculative_stack.data.back().type() == calc::Value::Type::kInt) {
+      bitfield = m_vm.state.speculative_stack.data.back().int_or_default();
+   }
+
+   BitfieldDisplay::render(0, GetScreenHeight() - 300, m_vm.currentRegister, bitfield);
 }

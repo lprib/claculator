@@ -2,6 +2,7 @@
 #include "calc/math_util.hpp"
 
 #include <cassert>
+#include <charconv>
 #include <iostream>
 #include <limits>
 #include <optional>
@@ -88,22 +89,22 @@ struct Parser {
       return tok;
    }
 
+   int how_many_numeric_chars(std::string_view base_chars, size_t offset) {
+      int n_chars = 0;
+      while(((current_index + offset + n_chars) < input.size()) &&
+            base_chars.find(to_lower(remaining()[offset + n_chars])) != std::string_view::npos) {
+         ++n_chars;
+      }
+      return n_chars;
+   }
+
    static constexpr std::string_view kNumericChars = "0123456789abcdef";
    std::optional<Token> number(intbase::IntBase base) {
       bool negate = prefix("-");
 
       size_t int_base = static_cast<size_t>(intbase::as_int(base));
-      if(int_base > kNumericChars.size()) {
-         return std::nullopt;
-      }
-
       std::string_view base_chars = kNumericChars.substr(0, int_base);
-
-      int n_chars = 0;
-      while(((current_index + n_chars) < input.size()) &&
-            base_chars.find(to_lower(remaining()[n_chars])) != std::string_view::npos) {
-         ++n_chars;
-      }
+      int n_chars = how_many_numeric_chars(base_chars, 0);
       if(n_chars == 0) {
          // hack: undo the `prefix("-")` done above since we didn't find any numbers
          if(negate) {
@@ -152,8 +153,30 @@ struct Parser {
    }
 
    std::optional<Token> floating_number() {
-      // std::string_view base_chars = kNumericChars.substr(0, int_base);
-      return std::nullopt;
+      std::string_view base_chars = kNumericChars.substr(0, 10);
+      auto len = how_many_numeric_chars(base_chars, 0);
+      if(len == 0) {
+         return std::nullopt;
+      }
+      if((remaining().substr(len).size() >= 1) && (remaining().substr(len, 1) == ".")) {
+         ++len;
+      } else {
+         return std::nullopt;
+      }
+
+      len += how_many_numeric_chars(base_chars, len);
+
+      double val;
+      auto result = std::from_chars(&input[current_index], &input[current_index + len], val);
+      if(result.ec == std::errc()) {
+         auto tok = Token::make_double(current_index, current_index + len, val);
+         current_index += len;
+         return tok;
+      } else {
+         auto tok = Token::make_error(current_index, current_index + len, "unparseable float");
+         current_index += len;
+         return tok;
+      }
    }
 
    std::optional<Token> generic_prefixed_number(std::string_view pre, intbase::IntBase base) {
@@ -176,6 +199,25 @@ struct Parser {
       return generic_prefixed_number("0i"sv, intbase::IntBase::kDec);
    }
 
+   std::optional<Token> string_literal() {
+      if(prefix("\"")) {
+         int n_chars = 0;
+         while(((current_index + n_chars) < input.size()) &&
+               (kWhitespaceChars.find(remaining()[n_chars]) == std::string_view::npos)) {
+            ++n_chars;
+         }
+         auto tok = Token::make_string(
+            current_index,
+            current_index + n_chars,
+            std::string(input.substr(current_index, n_chars))
+         );
+         current_index += n_chars;
+         return tok;
+      } else {
+         return std::nullopt;
+      }
+   }
+
    std::optional<Token> test_for_super_precedence(
       std::string_view c, size_t start, bool ignore_negation
    ) {
@@ -194,15 +236,20 @@ struct Parser {
       return std::nullopt;
    }
 
-   std::optional<Token> super_precedence_word(bool lookahead, bool ignore_negation, int offset = 0) {
+   std::optional<Token> super_precedence_word(
+      bool lookahead, bool ignore_negation, int offset = 0
+   ) {
       auto index_offset = current_index + offset;
       // ignore_negation == !lookahead. If we are just looking for a
       // superprecedence word within another word (ie lookahead is true), we
       // shouldn't ignore negation. If we are looking at a toplevel token, we
       // should ignore negation as it may be used as a negative integer rather
       // than an operator
-      auto tok =
-         test_for_super_precedence(input.substr(current_index + offset), index_offset, ignore_negation);
+      auto tok = test_for_super_precedence(
+         input.substr(current_index + offset),
+         index_offset,
+         ignore_negation
+      );
       if(lookahead) {
          return tok;
       } else {
@@ -240,6 +287,10 @@ struct Parser {
       if(maybe.has_value()) {
          return *maybe;
       }
+      maybe = string_literal();
+      if(maybe.has_value()) {
+         return *maybe;
+      }
 
       return word();
    }
@@ -262,22 +313,22 @@ std::vector<Token> parse(ParserSettings const& settings, std::string_view input)
 void unit_test() {
    std::cout << Parser("69420", ParserSettings(intbase::IntBase::kDec, {}))
                    .number(intbase::IntBase::kDec)
-                   ->number
+                   ->push_value.int_or_default()
              << "\n";
    assert(
       Parser("69420", ParserSettings(intbase::IntBase::kDec, {}))
          .number(intbase::IntBase::kDec)
-         ->number == 69420
+         ->push_value.int_or_default() == 69420
    );
    assert(
       Parser("12AB34CD56EF", ParserSettings(intbase::IntBase::kDec, {}))
          .number(intbase::IntBase::kHex)
-         ->number == 0x12AB34CD56EFLL
+         ->push_value.int_or_default() == 0x12AB34CD56EFLL
    );
    assert(
       Parser("100101001110111010111011", ParserSettings(intbase::IntBase::kDec, {}))
          .number(intbase::IntBase::kBin)
-         ->number == 0b100101001110111010111011LL
+         ->push_value.int_or_default() == 0b100101001110111010111011LL
    );
 
    auto settings = ParserSettings(intbase::IntBase::kDec, {});

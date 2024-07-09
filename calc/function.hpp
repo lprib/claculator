@@ -1,5 +1,7 @@
 #pragma once
 
+#include "calc/value.hpp"
+
 #include <array>
 #include <cstdint>
 #include <functional>
@@ -20,18 +22,18 @@ public:
 
    struct ExecutionResult {
       bool is_error;
-      std::vector<std::int64_t> returns;
+      std::vector<Value> returns;
       std::string error;
 
-      static ExecutionResult make_success(std::vector<std::int64_t> returns) {
+      static ExecutionResult make_success(std::vector<Value> returns) {
          return ExecutionResult(false, std::move(returns), "");
       }
       static ExecutionResult make_error(std::string error) {
-         return ExecutionResult(true, std::vector<std::int64_t>(), std::move(error));
+         return ExecutionResult(true, std::vector<Value>(), std::move(error));
       }
    };
 
-   virtual ExecutionResult execute(std::vector<std::int64_t> input) = 0;
+   virtual ExecutionResult execute(std::vector<Value> input) = 0;
 };
 
 class BinaryArithmeticFunction : public Function {
@@ -62,8 +64,14 @@ public:
       BinaryArithmeticFunction(name),
       m_fn(fn) {}
 
-   ExecutionResult execute(std::vector<std::int64_t> input) override {
-      return ExecutionResult::make_success(std::vector<std::int64_t>{m_fn(input[0], input[1])});
+   ExecutionResult execute(std::vector<Value> input) override {
+      // todo support floats
+      if((input[0].type() != Value::Type::kInt) || (input[1].type() != Value::Type::kInt)) {
+         return ExecutionResult::make_error("require two integer args");
+      }
+      return ExecutionResult::make_success(
+         std::vector<Value>{Value(m_fn(input[0].int_or_default(), input[1].int_or_default()))}
+      );
    }
 
 private:

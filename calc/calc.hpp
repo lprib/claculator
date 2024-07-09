@@ -6,19 +6,20 @@
 
 #include "calc/function.hpp"
 #include "calc/parse.hpp"
+#include "calc/value.hpp"
 
 namespace calc {
 
 struct Stack {
-   std::vector<std::int64_t> data;
+   std::vector<Value> data;
 
-   std::int64_t pop() {
+   Value pop() {
       auto ret = data.back();
       data.pop_back();
       return ret;
    }
 
-   void push(std::int64_t n) {
+   void push(Value n) {
       data.push_back(n);
    }
 };
