@@ -2,6 +2,7 @@
 
 #include "calc/bit_register.hpp"
 #include "calc/calc.hpp"
+#include "calc/function.hpp"
 #include "raylib.h"
 #include "view/style.hpp"
 #include <optional>
@@ -201,7 +202,6 @@ struct FixMode : public EnumeratedMode {
 };
 
 // temp for test
-extern RegisterDisplay test_register;
 
 class ViewModel {
 public:
@@ -221,12 +221,15 @@ public:
    IntWidthMode int_width;
    FixMode fix_mode;
 
-   RegisterDisplay const& currentRegister = test_register;
+   RegisterDisplay theOnlyRegisterForNow = RegisterDisplay(std::vector<Field>());
+   RegisterDisplay& current_register = theOnlyRegisterForNow;
 
    void OnCharPressed(int chr);
    void OnKeyPressed(KeyboardKey k);
 
    std::string GetStackDisplayString(int index);
+
+   ViewModel();
 
 private:
    void OnInputChanged(bool reset_history_highlight);

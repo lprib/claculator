@@ -6,10 +6,46 @@
 #include <charconv>
 #include <format>
 #include <iostream>
+#include <memory>
 
-// temp for test
-// RegisterDisplay test_register(std::vector<Field>{Field(0, 1, "TEST", FieldDisplay::kNumeric)});
-RegisterDisplay test_register(std::vector<Field>{});
+class FieldFunction : public calc::BuiltinNormalFunction {
+public:
+   FieldFunction(ViewModel& vm) : calc::BuiltinNormalFunction(3, "field"), m_vm(vm) {}
+   ExecutionResult execute(std::vector<calc::Value> input) override {
+      if((input[0].type() != calc::Value::Type::kInt) ||
+         (input[1].type() != calc::Value::Type::kInt) ||
+         (input[2].type() != calc::Value::Type::kString)) {
+         return ExecutionResult::make_error("require (int int string)");
+      }
+
+      for(auto const& field : m_vm.current_register.fields) {
+         if(field.name == input[2].string_or_default()) {
+            // an identical field already exists
+            return ExecutionResult::make_success(std::vector<calc::Value>());
+         }
+      }
+
+      m_vm.current_register.fields.push_back(Field(
+         input[0].int_or_default(),
+         input[1].int_or_default(),
+         input[2].string_or_default(),
+         FieldDisplay::kNumeric
+      ));
+
+      for(auto const& field : m_vm.current_register.fields) {
+         std::cout << field.name << "\n";
+      }
+
+      return ExecutionResult::make_success(std::vector<calc::Value>());
+   }
+
+private:
+   ViewModel& m_vm;
+};
+
+ViewModel::ViewModel() {
+   state.functions.push_back(std::make_unique<FieldFunction>(*this));
+}
 
 void ViewModel::OnCharPressed(int chr) {
    switch(editor_mode.mode) {

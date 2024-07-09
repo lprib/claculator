@@ -280,5 +280,5 @@ void View::render() {
       bitfield = m_vm.state.speculative_stack.data.back().int_or_default();
    }
 
-   BitfieldDisplay::render(0, GetScreenHeight() - 300, m_vm.currentRegister, bitfield);
+   BitfieldDisplay::render(0, GetScreenHeight() - 300, m_vm.current_register, bitfield);
 }
