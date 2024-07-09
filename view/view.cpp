@@ -1,6 +1,6 @@
 #include "raylib.h"
 
-#include "textspan.hpp"
+#include "text.hpp"
 #include "view/BitfieldDisplay.hpp"
 #include "view/style.hpp"
 #include "view/view.hpp"

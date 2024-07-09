@@ -232,4 +232,5 @@ private:
    void OnInputChanged(bool reset_history_highlight);
    void OnCommit();
    void OnHistoryHighlightChanged();
+   void DeleteOneChar();
 };

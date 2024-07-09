@@ -3,7 +3,7 @@
 #include "calc/function.hpp"
 #include "calc/intbase.hpp"
 #include "calc/value.hpp"
-#include "textspan.hpp"
+#include "text.hpp"
 
 #include <cstdint>
 #include <memory>

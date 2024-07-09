@@ -15,3 +15,11 @@ struct TextSpan {
       return (index >= start) && (index < end);
    }
 };
+
+namespace {
+static constexpr std::string_view kWhitespaceChars = " \t\r\n";
+}
+
+inline bool IsWhitespace(char c) {
+   return kWhitespaceChars.find(c) != std::string_view::npos;
+}

@@ -1,5 +1,6 @@
 #include "viewmodel.hpp"
 #include "calc/parse.hpp"
+#include "text.hpp"
 
 #include <array>
 #include <charconv>
@@ -120,10 +121,20 @@ void ViewModel::OnKeyPressed(KeyboardKey k) {
       switch(k) {
       case KEY_BACKSPACE:
          if(!current_input.empty()) {
-            auto to_delete = static_cast<int>(highlighted_index) - 1;
-            if(to_delete >= 0) {
-               current_input.erase(to_delete, 1);
-               --highlighted_index;
+            if(IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
+               // delete non-whitespace
+               while((highlighted_index > 0) && !IsWhitespace(current_input[highlighted_index - 1])
+               ) {
+                  DeleteOneChar();
+               }
+               // delete whitespace
+               while((highlighted_index > 0) && IsWhitespace(current_input[highlighted_index - 1])
+               ) {
+                  DeleteOneChar();
+               }
+               OnInputChanged(true);
+            } else {
+               DeleteOneChar();
                OnInputChanged(true);
             }
          }
@@ -134,6 +145,14 @@ void ViewModel::OnKeyPressed(KeyboardKey k) {
       default:
          break;
       }
+   }
+}
+
+void ViewModel::DeleteOneChar() {
+   auto to_delete = static_cast<int>(highlighted_index) - 1;
+   if(to_delete >= 0) {
+      current_input.erase(to_delete, 1);
+      --highlighted_index;
    }
 }
 

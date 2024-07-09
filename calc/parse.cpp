@@ -1,5 +1,6 @@
 #include "calc/parse.hpp"
 #include "calc/math_util.hpp"
+#include "text.hpp"
 
 #include <cassert>
 #include <charconv>
@@ -49,8 +50,7 @@ struct Parser {
    static constexpr std::string_view kWhitespaceChars = " \t\r\n";
    bool skip_whitespace() {
       bool is_ws = false;
-      while((current_index < input.size()) &&
-            kWhitespaceChars.find(next()) != std::string_view::npos) {
+      while((current_index < input.size()) && IsWhitespace(next())) {
          ++current_index;
          is_ws = true;
       }
@@ -59,8 +59,7 @@ struct Parser {
 
    std::optional<Token> word() {
       int n_chars = 0;
-      while(((current_index + n_chars) < input.size()) &&
-            (kWhitespaceChars.find(remaining()[n_chars]) == std::string_view::npos)) {
+      while(((current_index + n_chars) < input.size()) && !IsWhitespace(remaining()[n_chars])) {
          // stop early for super precedence
          if(super_precedence_word(true, true, n_chars).has_value()) {
             break;
@@ -202,8 +201,7 @@ struct Parser {
    std::optional<Token> string_literal() {
       if(prefix("\"")) {
          int n_chars = 0;
-         while(((current_index + n_chars) < input.size()) &&
-               (kWhitespaceChars.find(remaining()[n_chars]) == std::string_view::npos)) {
+         while(((current_index + n_chars) < input.size()) && !IsWhitespace(remaining()[n_chars])) {
             ++n_chars;
          }
          auto tok = Token::make_string(
