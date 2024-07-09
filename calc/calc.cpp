@@ -24,6 +24,39 @@ public:
    }
 };
 
+class DropFunction : public BuiltinNormalFunction {
+public:
+   DropFunction() : BuiltinNormalFunction(1, "drop") {}
+   Function::ExecutionResult execute(std::vector<Value> input) override {
+      return ExecutionResult::make_success(std::vector<Value>());
+   }
+};
+class DupFunction : public BuiltinNormalFunction {
+public:
+   DupFunction() : BuiltinNormalFunction(1, "dup") {}
+   Function::ExecutionResult execute(std::vector<Value> input) override {
+      return ExecutionResult::make_success(std::vector<Value>{input[0], input[0]});
+   }
+};
+
+class Dup2Function : public BuiltinNormalFunction {
+public:
+   Dup2Function() : BuiltinNormalFunction(2, "dup2") {}
+   Function::ExecutionResult execute(std::vector<Value> input) override {
+      return ExecutionResult::make_success(
+         std::vector<Value>{input[0], input[1], input[0], input[1]}
+      );
+   }
+};
+
+class SwapFunction : public BuiltinNormalFunction {
+public:
+   SwapFunction() : BuiltinNormalFunction(2, "swap") {}
+   Function::ExecutionResult execute(std::vector<Value> input) override {
+      return ExecutionResult::make_success(std::vector<Value>{input[1], input[0]});
+   }
+};
+
 #define SIMPLE_BIN_OP(op) \
    fns.push_back(std::make_unique<calc::SimpleBinaryArithmeticFunction>(#op, [](auto a, auto b) { \
       return a op b; \
@@ -36,6 +69,10 @@ static std::vector<std::unique_ptr<calc::Function>> MakeBuiltinFunctions() {
    SIMPLE_BIN_OP(*);
    SIMPLE_BIN_OP(%);
    fns.push_back(std::make_unique<DivideFunction>());
+   fns.push_back(std::make_unique<DropFunction>());
+   fns.push_back(std::make_unique<Dup2Function>());
+   fns.push_back(std::make_unique<DupFunction>());
+   fns.push_back(std::make_unique<SwapFunction>());
    return fns;
 }
 

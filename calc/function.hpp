@@ -36,6 +36,26 @@ public:
    virtual ExecutionResult execute(std::vector<Value> input) = 0;
 };
 
+class BuiltinNormalFunction : public Function {
+public:
+   BuiltinNormalFunction(size_t _arity, std::string_view _name) : m_arity(_arity), m_name(_name) {}
+   std::string_view name() const override {
+      return m_name;
+   }
+
+   size_t arity() const override {
+      return m_arity;
+   }
+
+   bool super_precedence() const {
+      return false;
+   }
+
+private:
+   size_t m_arity;
+   std::string_view m_name;
+};
+
 class BinaryArithmeticFunction : public Function {
 public:
    BinaryArithmeticFunction(char const* name) : m_name(name) {}
