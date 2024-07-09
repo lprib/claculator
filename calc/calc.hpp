@@ -33,11 +33,11 @@ public:
 
    std::vector<std::unique_ptr<Function>> functions;
 
-   void Speculate(std::vector<parse::Token>& tokens);
+   void Execute(std::vector<parse::Token>& tokens, bool is_speculative);
    void Commit();
 
 private:
-   void SpeculateToken(parse::Token& token);
+   void ExecuteToken(parse::Token& token, bool is_speculative);
    void PoisionSpeculation();
    bool CheckSpecStackSize(std::size_t size);
 };

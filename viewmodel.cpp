@@ -11,6 +11,9 @@
 class FieldFunction : public calc::BuiltinNormalFunction {
 public:
    FieldFunction(ViewModel& vm) : calc::BuiltinNormalFunction(3, "field"), m_vm(vm) {}
+   bool allow_speculative_execution() const override {
+      return false;
+   }
    ExecutionResult execute(std::vector<calc::Value> input) override {
       if((input[0].type() != calc::Value::Type::kInt) ||
          (input[1].type() != calc::Value::Type::kInt) ||
@@ -21,7 +24,7 @@ public:
       for(auto const& field : m_vm.current_register.fields) {
          if(field.name == input[2].string_or_default()) {
             // an identical field already exists
-            return ExecutionResult::make_success(std::vector<calc::Value>());
+            return ExecutionResult::make_success();
          }
       }
 
@@ -36,7 +39,22 @@ public:
          std::cout << field.name << "\n";
       }
 
-      return ExecutionResult::make_success(std::vector<calc::Value>());
+      return ExecutionResult::make_success();
+   }
+
+private:
+   ViewModel& m_vm;
+};
+
+class ClearFieldsFunction : public calc::BuiltinNormalFunction {
+public:
+   ClearFieldsFunction(ViewModel& vm) : calc::BuiltinNormalFunction(0, "clearfields"), m_vm(vm) {}
+   bool allow_speculative_execution() const override {
+      return false;
+   }
+   ExecutionResult execute(std::vector<calc::Value> input) override {
+      m_vm.current_register.fields.clear();
+      return ExecutionResult::make_success();
    }
 
 private:
@@ -45,6 +63,7 @@ private:
 
 ViewModel::ViewModel() {
    state.functions.push_back(std::make_unique<FieldFunction>(*this));
+   state.functions.push_back(std::make_unique<ClearFieldsFunction>(*this));
 }
 
 void ViewModel::OnCharPressed(int chr) {
@@ -58,7 +77,7 @@ void ViewModel::OnCharPressed(int chr) {
             current_input.insert(highlighted_index, 1, static_cast<char>(chr));
          }
          ++highlighted_index;
-         OnInputChanged(true);
+         SpeculativelyExecuteInput(true);
       }
       break;
    default:
@@ -70,7 +89,7 @@ void ViewModel::OnHistoryHighlightChanged() {
    if(history_highlighted_index < history.size()) {
       current_input = history[history_highlighted_index];
       highlighted_index = current_input.size();
-      OnInputChanged(false);
+      SpeculativelyExecuteInput(false);
    }
 }
 
@@ -130,11 +149,11 @@ void ViewModel::OnKeyPressed(KeyboardKey k) {
       case KEY_D:
          current_input.clear();
          highlighted_index = 0;
-         OnInputChanged(true);
+         SpeculativelyExecuteInput(true);
          break;
       case KEY_Z:
          input_display.Rotate();
-         OnInputChanged(true);
+         SpeculativelyExecuteInput(true);
          break;
       case KEY_X:
          output_display.Rotate();
@@ -168,10 +187,10 @@ void ViewModel::OnKeyPressed(KeyboardKey k) {
                ) {
                   DeleteOneChar();
                }
-               OnInputChanged(true);
+               SpeculativelyExecuteInput(true);
             } else {
                DeleteOneChar();
-               OnInputChanged(true);
+               SpeculativelyExecuteInput(true);
             }
          }
          break;
@@ -226,21 +245,21 @@ std::string ViewModel::GetStackDisplayString(int index) {
    }
 }
 
-void ViewModel::OnInputChanged(bool reset_history_highlight) {
+void ViewModel::ParseInput() {
    parsed = parse::parse(parse::ParserSettings(input_display.mode, state.functions), current_input);
+}
 
-   for(auto const& token : parsed) {
-      std::cout << token << " ";
-   }
-   std::cout << "\n";
+void ViewModel::SpeculativelyExecuteInput(bool reset_history_highlight) {
+   ParseInput();
 
-   state.Speculate(parsed);
+   state.Execute(parsed, true);
    if(reset_history_highlight) {
       history_highlighted_index = history.size();
    }
 }
 
 void ViewModel::OnCommit() {
+   state.Execute(parsed, false);
    state.Commit();
    history.push_back(current_input);
    current_input.clear();

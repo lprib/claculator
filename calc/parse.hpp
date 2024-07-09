@@ -77,6 +77,9 @@ public:
    /// @brief used for kWord, kError
    std::string text;
 
+   /// @brief May be set to show additional popup for this token in the UI
+   std::string additional_popup_text;
+
    size_t length() {
       return span.end - span.start;
    }

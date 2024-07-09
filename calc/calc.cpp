@@ -28,7 +28,7 @@ class DropFunction : public BuiltinNormalFunction {
 public:
    DropFunction() : BuiltinNormalFunction(1, "drop") {}
    Function::ExecutionResult execute(std::vector<Value> input) override {
-      return ExecutionResult::make_success(std::vector<Value>());
+      return ExecutionResult::make_success();
    }
 };
 class DupFunction : public BuiltinNormalFunction {
@@ -85,11 +85,11 @@ State::State() {
    );
 }
 
-void State::Speculate(std::vector<parse::Token>& tokens) {
+void State::Execute(std::vector<parse::Token>& tokens, bool is_speculative) {
    speculate_poisoned = false;
    speculative_stack = committed_stack;
    for(auto& token : tokens) {
-      SpeculateToken(token);
+      ExecuteToken(token, is_speculative);
    }
 }
 void State::Commit() {
@@ -109,7 +109,7 @@ bool State::CheckSpecStackSize(std::size_t size) {
    }
 }
 
-void State::SpeculateToken(parse::Token& token) {
+void State::ExecuteToken(parse::Token& token, bool is_speculative) {
    if(speculate_poisoned) {
       return;
    }
@@ -124,6 +124,12 @@ void State::SpeculateToken(parse::Token& token) {
       break;
    case parse::TokenType::kWord: {
       auto& fn = functions[token.function_index];
+      if(is_speculative && !fn->allow_speculative_execution()) {
+         token.additional_popup_text = " [enter to execute] ";
+         PoisionSpeculation();
+         return;
+      }
+
       if(speculative_stack.data.size() < fn->arity()) {
          token.into_error(std::format(
             "stack underflow: require {}, got {}",

@@ -20,11 +20,18 @@ public:
       return false;
    }
 
+   virtual bool allow_speculative_execution() const {
+      return true;
+   }
+
    struct ExecutionResult {
       bool is_error;
       std::vector<Value> returns;
       std::string error;
 
+      static ExecutionResult make_success() {
+         return ExecutionResult(false, std::vector<Value>(), "");
+      }
       static ExecutionResult make_success(std::vector<Value> returns) {
          return ExecutionResult(false, std::move(returns), "");
       }
@@ -45,10 +52,6 @@ public:
 
    size_t arity() const override {
       return m_arity;
-   }
-
-   bool super_precedence() const {
-      return false;
    }
 
 private:
