@@ -201,6 +201,32 @@ struct FixMode : public EnumeratedMode {
    }
 };
 
+struct OnOffMode: public EnumeratedMode {
+   enum class Mode { kOn, kOff };
+   Mode mode = Mode::kOff;
+   char const* DisplayString() const override {
+      switch(mode) {
+      case Mode::kOn:
+         return "on";
+         break;
+      case Mode::kOff:
+         return "off";
+         break;
+      }
+      return "";
+   }
+
+   void Rotate() override {
+      EnumRotate(mode, Mode::kOff);
+   }
+};
+
+struct FastEntryMode: public OnOffMode {
+   char const* KeybindString() const override {
+      return "f";
+   }
+};
+
 // temp for test
 
 class Controller {
@@ -220,6 +246,7 @@ public:
    SeparatorMode sep_mode;
    IntWidthMode int_width;
    FixMode fix_mode;
+   FastEntryMode fast_entry_mode;
 
    RegisterDisplay theOnlyRegisterForNow = RegisterDisplay(std::vector<Field>());
    RegisterDisplay& current_register = theOnlyRegisterForNow;
@@ -237,4 +264,5 @@ private:
    void OnCommit();
    void OnHistoryHighlightChanged();
    void DeleteOneChar();
+   void CheckFastEntryCommit();
 };

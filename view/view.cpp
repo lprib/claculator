@@ -231,11 +231,12 @@ void View::render_state_infobar() {
 
    std::vector<ModeWidth> modes = {
       {&m_controller.editor_mode, 70},
-      {&m_controller.input_display, 60},
-      {&m_controller.output_display, 65},
+      {&m_controller.input_display, 50},
+      {&m_controller.output_display, 50},
       {&m_controller.sep_mode, 80},
       {&m_controller.int_width, 60},
-      {&m_controller.fix_mode, 50}
+      {&m_controller.fix_mode, 50},
+      {&m_controller.fast_entry_mode, 40},
    };
 
    int xoffset = 0;

@@ -10,7 +10,9 @@
 
 class FieldFunction : public calc::BuiltinNormalFunction {
 public:
-   FieldFunction(Controller& controller) : calc::BuiltinNormalFunction(3, "field"), m_controller(controller) {}
+   FieldFunction(Controller& controller) :
+      calc::BuiltinNormalFunction(3, "field"),
+      m_controller(controller) {}
    bool allow_speculative_execution() const override {
       return false;
    }
@@ -28,12 +30,9 @@ public:
          }
       }
 
-      m_controller.current_register.fields.push_back(Field(
-         input[0].as_int(),
-         input[1].as_int(),
-         input[2].as_string(),
-         FieldDisplay::kNumeric
-      ));
+      m_controller.current_register.fields.push_back(
+         Field(input[0].as_int(), input[1].as_int(), input[2].as_string(), FieldDisplay::kNumeric)
+      );
 
       for(auto const& field : m_controller.current_register.fields) {
          std::cout << field.name << "\n";
@@ -48,7 +47,9 @@ private:
 
 class ClearFieldsFunction : public calc::BuiltinNormalFunction {
 public:
-   ClearFieldsFunction(Controller& controller) : calc::BuiltinNormalFunction(0, "clearfields"), m_controller(controller) {}
+   ClearFieldsFunction(Controller& controller) :
+      calc::BuiltinNormalFunction(0, "clearfields"),
+      m_controller(controller) {}
    bool allow_speculative_execution() const override {
       return false;
    }
@@ -167,6 +168,9 @@ void Controller::OnKeyPressed(KeyboardKey k) {
       case KEY_R:
          fix_mode.Rotate();
          break;
+      case KEY_F:
+         fast_entry_mode.Rotate();
+         break;
       default:
          break;
       }
@@ -251,6 +255,33 @@ void Controller::ParseInput() {
 
 void Controller::SpeculativelyExecuteInput(bool reset_history_highlight) {
    ParseInput();
+
+   // If fast entry mode is enabled and the input is all ok (speculative etc):
+   //    If the last token is a word and function->allow_speculative_execution():
+   //       Commit the entry immediately and execute for real
+   // Otherwise: speculatively execute (if applicable), or just parse and show
+   // annotations
+   if((fast_entry_mode.mode == FastEntryMode::Mode::kOn) && (!parsed.empty()) &&
+      (parsed.back().type == parse::TokenType::kWord)) {
+      bool ok_to_fast_commit = true;
+      for(auto const& token : parsed) {
+         if(token.type == parse::TokenType::kError) {
+            ok_to_fast_commit = false;
+            break;
+         }
+         if((token.type == parse::TokenType::kWord)) {
+            auto& function = state.functions[parsed.back().function_index];
+            if(!function->allow_speculative_execution()) {
+               ok_to_fast_commit = false;
+               break;
+            }
+         }
+      }
+      if(ok_to_fast_commit) {
+         OnCommit();
+         return;
+      }
+   }
 
    state.Execute(parsed, true);
    if(reset_history_highlight) {
