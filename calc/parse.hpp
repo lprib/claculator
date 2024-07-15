@@ -16,21 +16,6 @@ namespace parse {
 
 enum class TokenType { kDecimalNumber, kHexNumber, kBinaryNumber, kDouble, kString, kWord, kError };
 
-enum class BuiltinOperation {
-   kAdd,
-   kSub,
-   kMul,
-   kDiv,
-   kIntDiv,
-   kMod,
-   kAnd,
-   kOr,
-   kXor,
-   kInv,
-   kShr,
-   kShl
-};
-
 class Token {
 public:
    static Token make_integer(size_t start, size_t end, intbase::IntBase base, int64_t n) {
