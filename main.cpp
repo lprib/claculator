@@ -1,14 +1,14 @@
 #include "raylib.h"
 
 #include "view/view.hpp"
-#include "viewmodel.hpp"
+#include "controller.hpp"
 
 #include <iostream>
 #include <string_view>
 using namespace std::literals;
 
 int main(void) {
-   ViewModel viewmodel;
+   Controller viewmodel;
    View view(viewmodel);
 
    const int screenWidth = 800;

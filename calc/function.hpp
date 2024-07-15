@@ -93,7 +93,7 @@ public:
          return ExecutionResult::make_error("require two integer args");
       }
       return ExecutionResult::make_success(
-         std::vector<Value>{Value(m_fn(input[0].int_or_default(), input[1].int_or_default()))}
+         std::vector<Value>{Value(m_fn(input[0].as_int(), input[1].as_int()))}
       );
    }
 

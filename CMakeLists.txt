@@ -22,8 +22,8 @@ add_executable(main
     view/style.hpp
     view/view.cpp
     view/view.hpp
-    viewmodel.cpp
-    viewmodel.hpp
+    controller.cpp
+    controller.hpp
 )
 
 target_include_directories(main PRIVATE .)

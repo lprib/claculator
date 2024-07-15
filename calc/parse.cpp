@@ -311,22 +311,22 @@ std::vector<Token> parse(ParserSettings const& settings, std::string_view input)
 void unit_test() {
    std::cout << Parser("69420", ParserSettings(intbase::IntBase::kDec, {}))
                    .number(intbase::IntBase::kDec)
-                   ->push_value.int_or_default()
+                   ->push_value.as_int()
              << "\n";
    assert(
       Parser("69420", ParserSettings(intbase::IntBase::kDec, {}))
          .number(intbase::IntBase::kDec)
-         ->push_value.int_or_default() == 69420
+         ->push_value.as_int() == 69420
    );
    assert(
       Parser("12AB34CD56EF", ParserSettings(intbase::IntBase::kDec, {}))
          .number(intbase::IntBase::kHex)
-         ->push_value.int_or_default() == 0x12AB34CD56EFLL
+         ->push_value.as_int() == 0x12AB34CD56EFLL
    );
    assert(
       Parser("100101001110111010111011", ParserSettings(intbase::IntBase::kDec, {}))
          .number(intbase::IntBase::kBin)
-         ->push_value.int_or_default() == 0b100101001110111010111011LL
+         ->push_value.as_int() == 0b100101001110111010111011LL
    );
 
    auto settings = ParserSettings(intbase::IntBase::kDec, {});

@@ -135,8 +135,8 @@ static void rich_text_box(
 }
 
 void View::render_stack() {
-   for(std::size_t i = 0; i < m_vm.state.speculative_stack.data.size(); ++i) {
-      auto data = m_vm.GetStackDisplayString(i);
+   for(std::size_t i = 0; i < m_controller.state.speculative_stack.data.size(); ++i) {
+      auto data = m_controller.GetStackDisplayString(i);
       single_line_textbox(
          1,
          i * bigfont_textbox_height() + 1,
@@ -151,9 +151,9 @@ void View::render_stack() {
 }
 
 void View::render_history() {
-   for(size_t i = 0; i < m_vm.history.size(); ++i) {
-      auto data = m_vm.history[i].c_str();
-      auto is_highlighted = m_vm.history_highlighted_index == i;
+   for(size_t i = 0; i < m_controller.history.size(); ++i) {
+      auto data = m_controller.history[i].c_str();
+      auto is_highlighted = m_controller.history_highlighted_index == i;
       single_line_textbox(
          GetScreenWidth() - 400 - 1,
          i * bigfont_textbox_height() + 1,
@@ -209,14 +209,14 @@ void View::render_main_input() {
       5,
       y,
       GetScreenWidth() - kPadding * 2,
-      m_vm.current_input.c_str(),
+      m_controller.current_input.c_str(),
       kDefaultStyle.big_font,
       SKYBLUE,
       kDefaultStyle.dark_bg,
       kDefaultStyle.dark_text,
       highlight,
-      m_vm.highlighted_index,
-      tokens_to_span_desc(m_vm.parsed)
+      m_controller.highlighted_index,
+      tokens_to_span_desc(m_controller.parsed)
    );
 }
 
@@ -230,12 +230,12 @@ void View::render_state_infobar() {
    static constexpr int kPadding = 10;
 
    std::vector<ModeWidth> modes = {
-      {&m_vm.editor_mode, 70},
-      {&m_vm.input_display, 60},
-      {&m_vm.output_display, 65},
-      {&m_vm.sep_mode, 80},
-      {&m_vm.int_width, 60},
-      {&m_vm.fix_mode, 50}
+      {&m_controller.editor_mode, 70},
+      {&m_controller.input_display, 60},
+      {&m_controller.output_display, 65},
+      {&m_controller.sep_mode, 80},
+      {&m_controller.int_width, 60},
+      {&m_controller.fix_mode, 50}
    };
 
    int xoffset = 0;
@@ -277,10 +277,10 @@ void View::render() {
    render_history();
 
    int bitfield = 0;
-   if(!m_vm.state.speculative_stack.data.empty() &&
-      m_vm.state.speculative_stack.data.back().type() == calc::Value::Type::kInt) {
-      bitfield = m_vm.state.speculative_stack.data.back().int_or_default();
+   if(!m_controller.state.speculative_stack.data.empty() &&
+      m_controller.state.speculative_stack.data.back().type() == calc::Value::Type::kInt) {
+      bitfield = m_controller.state.speculative_stack.data.back().as_int();
    }
 
-   BitfieldDisplay::render(0, GetScreenHeight() - 300, m_vm.current_register, bitfield);
+   BitfieldDisplay::render(0, GetScreenHeight() - 300, m_controller.current_register, bitfield);
 }

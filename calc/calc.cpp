@@ -15,11 +15,11 @@ public:
    DivideFunction() : BinaryArithmeticFunction("/") {}
    Function::ExecutionResult execute(std::vector<Value> input) override {
       // TODO support doubles
-      if(input[1].int_or_default() == 0) {
+      if(input[1].as_int() == 0) {
          return ExecutionResult::make_error("div by zero");
       }
       return ExecutionResult::make_success(
-         std::vector<Value>{Value(int64_t{input[0].int_or_default() / input[1].int_or_default()})}
+         std::vector<Value>{Value(int64_t{input[0].as_int() / input[1].as_int()})}
       );
    }
 };

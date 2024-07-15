@@ -18,19 +18,19 @@ public:
       return typ;
    }
 
-   int64_t int_or_default() const {
+   int64_t as_int() const {
       if(const int64_t* pval = std::get_if<int64_t>(&inner)) {
          return *pval;
       }
       return 0;
    }
-   double double_or_default() const {
+   double as_double() const {
       if(const double* pval = std::get_if<double>(&inner)) {
          return *pval;
       }
       return 0.0;
    }
-   std::string string_or_default() const {
+   std::string as_string() const {
       if(const std::string* pval = std::get_if<std::string>(&inner)) {
          return *pval;
       }

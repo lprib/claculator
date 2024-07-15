@@ -203,7 +203,7 @@ struct FixMode : public EnumeratedMode {
 
 // temp for test
 
-class ViewModel {
+class Controller {
 public:
    std::string current_input;
    std::vector<parse::Token> parsed;
@@ -229,7 +229,7 @@ public:
 
    std::string GetStackDisplayString(int index);
 
-   ViewModel();
+   Controller();
 
 private:
    void ParseInput();

@@ -1,4 +1,4 @@
-#include "viewmodel.hpp"
+#include "controller.hpp"
 #include "calc/parse.hpp"
 #include "text.hpp"
 
@@ -10,7 +10,7 @@
 
 class FieldFunction : public calc::BuiltinNormalFunction {
 public:
-   FieldFunction(ViewModel& vm) : calc::BuiltinNormalFunction(3, "field"), m_vm(vm) {}
+   FieldFunction(Controller& controller) : calc::BuiltinNormalFunction(3, "field"), m_controller(controller) {}
    bool allow_speculative_execution() const override {
       return false;
    }
@@ -21,21 +21,21 @@ public:
          return ExecutionResult::make_error("require (int int string)");
       }
 
-      for(auto const& field : m_vm.current_register.fields) {
-         if(field.name == input[2].string_or_default()) {
+      for(auto const& field : m_controller.current_register.fields) {
+         if(field.name == input[2].as_string()) {
             // an identical field already exists
             return ExecutionResult::make_success();
          }
       }
 
-      m_vm.current_register.fields.push_back(Field(
-         input[0].int_or_default(),
-         input[1].int_or_default(),
-         input[2].string_or_default(),
+      m_controller.current_register.fields.push_back(Field(
+         input[0].as_int(),
+         input[1].as_int(),
+         input[2].as_string(),
          FieldDisplay::kNumeric
       ));
 
-      for(auto const& field : m_vm.current_register.fields) {
+      for(auto const& field : m_controller.current_register.fields) {
          std::cout << field.name << "\n";
       }
 
@@ -43,30 +43,30 @@ public:
    }
 
 private:
-   ViewModel& m_vm;
+   Controller& m_controller;
 };
 
 class ClearFieldsFunction : public calc::BuiltinNormalFunction {
 public:
-   ClearFieldsFunction(ViewModel& vm) : calc::BuiltinNormalFunction(0, "clearfields"), m_vm(vm) {}
+   ClearFieldsFunction(Controller& controller) : calc::BuiltinNormalFunction(0, "clearfields"), m_controller(controller) {}
    bool allow_speculative_execution() const override {
       return false;
    }
    ExecutionResult execute(std::vector<calc::Value> input) override {
-      m_vm.current_register.fields.clear();
+      m_controller.current_register.fields.clear();
       return ExecutionResult::make_success();
    }
 
 private:
-   ViewModel& m_vm;
+   Controller& m_controller;
 };
 
-ViewModel::ViewModel() {
+Controller::Controller() {
    state.functions.push_back(std::make_unique<FieldFunction>(*this));
    state.functions.push_back(std::make_unique<ClearFieldsFunction>(*this));
 }
 
-void ViewModel::OnCharPressed(int chr) {
+void Controller::OnCharPressed(int chr) {
    switch(editor_mode.mode) {
    case EditorMode::Mode::kInsert:
       if((chr >= 32) && (chr <= 125)) {
@@ -85,7 +85,7 @@ void ViewModel::OnCharPressed(int chr) {
    }
 }
 
-void ViewModel::OnHistoryHighlightChanged() {
+void Controller::OnHistoryHighlightChanged() {
    if(history_highlighted_index < history.size()) {
       current_input = history[history_highlighted_index];
       highlighted_index = current_input.size();
@@ -102,7 +102,7 @@ template <typename T> T RotateEnum(T value, T max) {
    return static_cast<T>(new_value);
 }
 
-void ViewModel::OnKeyPressed(KeyboardKey k) {
+void Controller::OnKeyPressed(KeyboardKey k) {
    if(k == KEY_ENTER) {
       OnCommit();
       return;
@@ -203,7 +203,7 @@ void ViewModel::OnKeyPressed(KeyboardKey k) {
    }
 }
 
-void ViewModel::DeleteOneChar() {
+void Controller::DeleteOneChar() {
    auto to_delete = static_cast<int>(highlighted_index) - 1;
    if(to_delete >= 0) {
       current_input.erase(to_delete, 1);
@@ -211,7 +211,7 @@ void ViewModel::DeleteOneChar() {
    }
 }
 
-std::string ViewModel::GetStackDisplayString(int index) {
+std::string Controller::GetStackDisplayString(int index) {
    calc::Value const& item = state.speculative_stack.data[index];
    switch(item.type()) {
    case calc::Value::Type::kInt: {
@@ -220,7 +220,7 @@ std::string ViewModel::GetStackDisplayString(int index) {
       std::to_chars(
          &*buf.begin(),
          (&*buf.begin()) + buf.size(),
-         state.speculative_stack.data[index].int_or_default(),
+         state.speculative_stack.data[index].as_int(),
          base
       );
       auto str = std::string(&*buf.begin());
@@ -237,19 +237,19 @@ std::string ViewModel::GetStackDisplayString(int index) {
       return str;
    }; break;
    case calc::Value::Type::kDouble:
-      return std::format("{}", item.double_or_default());
+      return std::format("{}", item.as_double());
    case calc::Value::Type::kString:
-      return std::format("\"{}\"", item.string_or_default());
+      return std::format("\"{}\"", item.as_string());
    default:
       return "";
    }
 }
 
-void ViewModel::ParseInput() {
+void Controller::ParseInput() {
    parsed = parse::parse(parse::ParserSettings(input_display.mode, state.functions), current_input);
 }
 
-void ViewModel::SpeculativelyExecuteInput(bool reset_history_highlight) {
+void Controller::SpeculativelyExecuteInput(bool reset_history_highlight) {
    ParseInput();
 
    state.Execute(parsed, true);
@@ -258,7 +258,7 @@ void ViewModel::SpeculativelyExecuteInput(bool reset_history_highlight) {
    }
 }
 
-void ViewModel::OnCommit() {
+void Controller::OnCommit() {
    state.Execute(parsed, false);
    state.Commit();
    history.push_back(current_input);

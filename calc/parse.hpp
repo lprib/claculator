@@ -98,19 +98,19 @@ public:
    friend std::ostream& operator<<(std::ostream& o, Token const& tok) {
       switch(tok.type) {
       case TokenType::kDecimalNumber:
-         o << "dec:" << tok.push_value.int_or_default();
+         o << "dec:" << tok.push_value.as_int();
          break;
       case TokenType::kHexNumber:
-         o << "hex:" << tok.push_value.int_or_default();
+         o << "hex:" << tok.push_value.as_int();
          break;
       case TokenType::kBinaryNumber:
-         o << "bin:" << tok.push_value.int_or_default();
+         o << "bin:" << tok.push_value.as_int();
          break;
       case TokenType::kDouble:
-         o << "double:" << tok.push_value.double_or_default();
+         o << "double:" << tok.push_value.as_double();
          break;
       case TokenType::kString:
-         o << "string:\"" << tok.push_value.string_or_default() << "\"";
+         o << "string:\"" << tok.push_value.as_string() << "\"";
          break;
       case TokenType::kWord:
          o << "word:" << tok.text;

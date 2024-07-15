@@ -1,14 +1,14 @@
 #pragma once
 
-#include "viewmodel.hpp"
+#include "controller.hpp"
 
 class View {
 public:
-   View(ViewModel& vm) : m_vm(vm) {}
+   View(Controller& controller) : m_controller(controller) {}
    void render();
 
 private:
-   ViewModel& m_vm;
+   Controller& m_controller;
 
    void render_main_input();
    void render_state_infobar();
