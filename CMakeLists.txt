@@ -22,6 +22,8 @@ add_executable(main
     view/style.hpp
     view/view.cpp
     view/view.hpp
+	view/ui_components.cpp
+	view/ui_components.hpp
     controller.cpp
     controller.hpp
 )
