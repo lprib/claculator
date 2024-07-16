@@ -8,20 +8,6 @@ public:
    int big_font;
    int small_font;
    int tiny_font;
-   Color bg1_dark;
-   Color bg1_mid;
-   Color bg1_light;
-   Color bg2_dark;
-   Color bg2_mid;
-   Color bg2_light;
-   Color bg3_dark;
-   Color bg3_mid;
-   Color bg3_light;
-   Color fg_dark;
-   Color fg_mid;
-   Color fg_light;
-   Color all_bg;
-
    Color dark_bg;
    Color dark_text;
    Color dark_text_emphasis;
@@ -68,20 +54,6 @@ constexpr Style kDefaultStyle = {
    30,
    20,
    10,
-   DARKBLUE,
-   BLUE,
-   SKYBLUE,
-   Color{60, 60, 60, 255},
-   GRAY,
-   LIGHTGRAY,
-   DARKGREEN,
-   GREEN,
-   LIME,
-   DARKGRAY,
-   MAROON,
-   RAYWHITE,
-   Color{0x20, 0x20, 0x20, 0xff},
-
    Color{0x1e, 0x1e, 0x1e, 0xff},
    Color{0x75, 0x75, 0x75, 0xff},
    Color{0xb5, 0xb5, 0xb5, 0xff},

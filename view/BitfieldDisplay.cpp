@@ -22,8 +22,8 @@ static int x_offset_of(int bit_index, BitfieldDisplayInfo const& info) {
 }
 
 static void render_one_line(
-   int x, int y, RegisterDisplay const& display, int64_t value, int bitoffset,
-   int bitcount, BitfieldDisplayInfo const& info
+   int x, int y, RegisterDisplay const& display, int64_t value, int bitoffset, int bitcount,
+   BitfieldDisplayInfo const& info
 ) {
    for(int i = 0; i < bitcount; ++i) {
       int bit_index = (bitcount - i - 1) + bitoffset;
@@ -49,10 +49,8 @@ static void render_one_line(
    for(size_t i = 0; i < display.fields.size(); ++i) {
       auto const& field = display.fields[i];
 
-      auto first_oob = (field.firstbit >= (bitoffset + bitcount)) ||
-                       (field.firstbit < bitoffset);
-      auto last_oob = (field.lastbit >= (bitoffset + bitcount)) ||
-                      (field.lastbit < bitoffset);
+      auto first_oob = (field.firstbit >= (bitoffset + bitcount)) || (field.firstbit < bitoffset);
+      auto last_oob = (field.lastbit >= (bitoffset + bitcount)) || (field.lastbit < bitoffset);
       if(first_oob && last_oob) {
          continue;
       }
@@ -64,19 +62,13 @@ static void render_one_line(
       int width = first_offset - last_offset + info.bitbox_size + 2;
 
       auto color = kFieldColors[i % kFieldColors.size()];
-      DrawRectangleLines(
-         x + last_offset - 1,
-         y,
-         width,
-         info.bitbox_size + 2,
-         color
-      );
+      DrawRectangleLines(x + last_offset - 1, y, width, info.bitbox_size + 2, color);
 
       int text_row = last_clipped % 4;
       auto string = field.name + "=" + field.GetDisplay(value);
       DrawText(
          string.c_str(),
-         last_offset,
+         x + last_offset,
          y + text_row * kDefaultStyle.small_font + info.bitbox_size + 2,
          kDefaultStyle.small_font,
          color
@@ -84,9 +76,7 @@ static void render_one_line(
    }
 }
 
-void BitfieldDisplay::render(
-   int x, int y, RegisterDisplay const& display, int64_t value
-) {
+void BitfieldDisplay::render(int x, int y, RegisterDisplay const& display, int64_t value) {
    auto info = BitfieldDisplayInfo{
       .bitbox_size = kDefaultStyle.tiny_font + 11,
       .spacing = 2,
@@ -94,5 +84,13 @@ void BitfieldDisplay::render(
    };
 
    render_one_line(x + 1, y, display, value, 32, 32, info);
-   render_one_line(x + 1, y + 110, display, value, 0, 32, info);
+   render_one_line(
+      x + 1,
+      y + info.bitbox_size + 2 + (display.fields.empty() ? 0 : 100),
+      display,
+      value,
+      0,
+      32,
+      info
+   );
 }

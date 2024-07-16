@@ -78,7 +78,7 @@ void Controller::OnCharPressed(int chr) {
             current_input.insert(highlighted_index, 1, static_cast<char>(chr));
          }
          ++highlighted_index;
-         SpeculativelyExecuteInput(true);
+         SpeculativelyExecuteInput(true, true);
       }
       break;
    default:
@@ -90,7 +90,7 @@ void Controller::OnHistoryHighlightChanged() {
    if(history_highlighted_index < history.size()) {
       current_input = history[history_highlighted_index];
       highlighted_index = current_input.size();
-      SpeculativelyExecuteInput(false);
+      SpeculativelyExecuteInput(false, false);
    }
 }
 
@@ -150,11 +150,11 @@ void Controller::OnKeyPressed(KeyboardKey k) {
       case KEY_D:
          current_input.clear();
          highlighted_index = 0;
-         SpeculativelyExecuteInput(true);
+         SpeculativelyExecuteInput(true, false);
          break;
       case KEY_Z:
          input_display.Rotate();
-         SpeculativelyExecuteInput(true);
+         SpeculativelyExecuteInput(true, false);
          break;
       case KEY_X:
          output_display.Rotate();
@@ -191,10 +191,10 @@ void Controller::OnKeyPressed(KeyboardKey k) {
                ) {
                   DeleteOneChar();
                }
-               SpeculativelyExecuteInput(true);
+               SpeculativelyExecuteInput(true, false);
             } else {
                DeleteOneChar();
-               SpeculativelyExecuteInput(true);
+               SpeculativelyExecuteInput(true, false);
             }
          }
          break;
@@ -253,15 +253,16 @@ void Controller::ParseInput() {
    parsed = parse::parse(parse::ParserSettings(input_display.mode, state.functions), current_input);
 }
 
-void Controller::SpeculativelyExecuteInput(bool reset_history_highlight) {
+void Controller::SpeculativelyExecuteInput(bool reset_history_highlight, bool allow_fast_entry) {
    ParseInput();
 
+   // If we are not selecting history:
    // If fast entry mode is enabled and the input is all ok (speculative etc):
    //    If the last token is a word and function->allow_speculative_execution():
    //       Commit the entry immediately and execute for real
    // Otherwise: speculatively execute (if applicable), or just parse and show
    // annotations
-   if((fast_entry_mode.mode == FastEntryMode::Mode::kOn) && (!parsed.empty()) &&
+   if(allow_fast_entry && (fast_entry_mode.mode == FastEntryMode::Mode::kOn) && (!parsed.empty()) &&
       (parsed.back().type == parse::TokenType::kWord)) {
       bool ok_to_fast_commit = true;
       for(auto const& token : parsed) {
@@ -290,9 +291,14 @@ void Controller::SpeculativelyExecuteInput(bool reset_history_highlight) {
 }
 
 void Controller::OnCommit() {
+   if(current_input.empty()) {
+      return;
+   }
    state.Execute(parsed, false);
    state.Commit();
-   history.push_back(current_input);
+   if(history.empty() || (history.back() != current_input)) {
+      history.push_back(current_input);
+   }
    current_input.clear();
    highlighted_index = 0;
    history_highlighted_index = history.size();

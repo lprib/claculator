@@ -201,29 +201,30 @@ struct FixMode : public EnumeratedMode {
    }
 };
 
-struct OnOffMode: public EnumeratedMode {
+struct OnOffMode : public EnumeratedMode {
    enum class Mode { kOn, kOff };
    Mode mode = Mode::kOff;
-   char const* DisplayString() const override {
-      switch(mode) {
-      case Mode::kOn:
-         return "on";
-         break;
-      case Mode::kOff:
-         return "off";
-         break;
-      }
-      return "";
-   }
 
    void Rotate() override {
       EnumRotate(mode, Mode::kOff);
    }
 };
 
-struct FastEntryMode: public OnOffMode {
+struct FastEntryMode : public OnOffMode {
    char const* KeybindString() const override {
       return "f";
+   }
+
+   char const* DisplayString() const override {
+      switch(mode) {
+      case Mode::kOn:
+         return "eager";
+         break;
+      case Mode::kOff:
+         return "hesitant";
+         break;
+      }
+      return "";
    }
 };
 
@@ -260,7 +261,7 @@ public:
 
 private:
    void ParseInput();
-   void SpeculativelyExecuteInput(bool reset_history_highlight);
+   void SpeculativelyExecuteInput(bool reset_history_highlight, bool allow_fast_entry);
    void OnCommit();
    void OnHistoryHighlightChanged();
    void DeleteOneChar();

@@ -13,34 +13,44 @@
 #include <vector>
 
 void View::render_stack() {
+   // TODO scroll view
+   DrawText("Stack", 5, 5, kDefaultStyle.small_font, kDefaultStyle.dark_text);
    for(std::size_t i = 0; i < m_controller.state.speculative_stack.data.size(); ++i) {
       auto data = m_controller.GetStackDisplayString(i);
       single_line_textbox(
          1,
-         i * bigfont_textbox_height() + 1,
+         i * bigfont_textbox_height() + 8 + kDefaultStyle.small_font,
          400,
          data.c_str(),
          kDefaultStyle.big_font,
-         kDefaultStyle.bg1_mid,
-         kDefaultStyle.bg1_dark,
-         kDefaultStyle.bg1_light
+         kDefaultStyle.highlight,
+         kDefaultStyle.dark_bg,
+         kDefaultStyle.dark_text
       );
    }
 }
 
 void View::render_history() {
+   // TODO scroll view
+   DrawText(
+      "History",
+      GetScreenWidth() - 400 + 4,
+      5,
+      kDefaultStyle.small_font,
+      kDefaultStyle.dark_text
+   );
    for(size_t i = 0; i < m_controller.history.size(); ++i) {
       auto data = m_controller.history[i].c_str();
       auto is_highlighted = m_controller.history_highlighted_index == i;
       single_line_textbox(
          GetScreenWidth() - 400 - 1,
-         i * bigfont_textbox_height() + 1,
+         i * bigfont_textbox_height() + 8 + kDefaultStyle.small_font,
          400,
          data,
          kDefaultStyle.big_font,
-         is_highlighted ? kDefaultStyle.bg3_dark : kDefaultStyle.bg3_light,
-         is_highlighted ? kDefaultStyle.bg3_light : kDefaultStyle.bg3_dark,
-         kDefaultStyle.bg3_mid
+         kDefaultStyle.highlight,
+         kDefaultStyle.dark_bg,
+         is_highlighted ? kDefaultStyle.dark_text_emphasis : kDefaultStyle.dark_text
       );
    }
 }
@@ -114,7 +124,7 @@ void View::render_state_infobar() {
       {&m_controller.sep_mode, 80},
       {&m_controller.int_width, 60},
       {&m_controller.fix_mode, 50},
-      {&m_controller.fast_entry_mode, 40},
+      {&m_controller.fast_entry_mode, 90},
    };
 
    int xoffset = 0;
@@ -161,5 +171,12 @@ void View::render() {
       bitfield = m_controller.state.speculative_stack.data.back().as_int();
    }
 
-   BitfieldDisplay::render(0, GetScreenHeight() - 300, m_controller.current_register, bitfield);
+   auto const& reg = m_controller.current_register;
+
+   BitfieldDisplay::render(
+      5,
+      GetScreenHeight() - BitfieldDisplay::height(reg) - 100,
+      reg,
+      bitfield
+   );
 }

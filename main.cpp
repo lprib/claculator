@@ -11,7 +11,7 @@ int main(void) {
    Controller viewmodel;
    View view(viewmodel);
 
-   const int screenWidth = 800;
+   const int screenWidth = 850;
    const int screenHeight = 450;
    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
    InitWindow(
