@@ -23,7 +23,7 @@ void View::render_stack() {
          400,
          data.c_str(),
          kDefaultStyle.big_font,
-         kDefaultStyle.highlight,
+         to_dark_text_color(m_controller.output_display.mode),
          kDefaultStyle.dark_bg,
          kDefaultStyle.dark_text
       );
@@ -115,7 +115,7 @@ struct ModeWidth {
 
 void View::render_state_infobar() {
    static constexpr int kKeybindSize = 20;
-   static constexpr int kPadding = 10;
+   static constexpr int kPadding = 5;
 
    std::vector<ModeWidth> modes = {
       {&m_controller.editor_mode, 70},
@@ -158,6 +158,41 @@ void View::render_state_infobar() {
    }
 }
 
+void View::render_multi_base_displays() {
+   static constexpr int kWidth = 250;
+   static constexpr int kPadding = 5;
+   single_line_textbox(
+      kPadding + 0*(kWidth+kPadding),
+      GetScreenHeight() - 120,
+      kWidth,
+      m_controller.GetStackDisplayStringRadix(0, NumericDisplayMode::Mode::kDec),
+      kDefaultStyle.small_font,
+      to_dark_text_color(intbase::IntBase::kDec),
+      kDefaultStyle.dark_bg,
+      kDefaultStyle.dark_text
+   );
+   single_line_textbox(
+      kPadding + 1*(kWidth+kPadding),
+      GetScreenHeight() - 120,
+      kWidth,
+      m_controller.GetStackDisplayStringRadix(0, NumericDisplayMode::Mode::kHex),
+      kDefaultStyle.small_font,
+      to_dark_text_color(intbase::IntBase::kHex),
+      kDefaultStyle.dark_bg,
+      kDefaultStyle.dark_text
+   );
+   single_line_textbox(
+      kPadding + 2*(kWidth+kPadding),
+      GetScreenHeight() - 120,
+      kWidth,
+      m_controller.GetStackDisplayStringRadix(0, NumericDisplayMode::Mode::kBin),
+      kDefaultStyle.small_font,
+      to_dark_text_color(intbase::IntBase::kBin),
+      kDefaultStyle.dark_bg,
+      kDefaultStyle.dark_text
+   );
+}
+
 void View::render() {
    ClearBackground(kDefaultStyle.neutral_bg);
    render_main_input();
@@ -165,18 +200,19 @@ void View::render() {
    render_stack();
    render_history();
 
-   int bitfield = 0;
+   int top_of_stack = 0;
    if(!m_controller.state.speculative_stack.data.empty() &&
       m_controller.state.speculative_stack.data.back().type() == calc::Value::Type::kInt) {
-      bitfield = m_controller.state.speculative_stack.data.back().as_int();
+      top_of_stack = m_controller.state.speculative_stack.data.back().as_int();
    }
 
-   auto const& reg = m_controller.current_register;
+   render_multi_base_displays();
 
+   auto const& reg = m_controller.current_register;
    BitfieldDisplay::render(
       5,
-      GetScreenHeight() - BitfieldDisplay::height(reg) - 100,
+      GetScreenHeight() - BitfieldDisplay::height(reg) - 125,
       reg,
-      bitfield
+      top_of_stack
    );
 }

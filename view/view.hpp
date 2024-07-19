@@ -14,6 +14,7 @@ private:
    void render_state_infobar();
    void render_stack();
    void render_history();
+   void render_multi_base_displays();
 
    void draw_bits(int y, int bitwidth, int64_t value);
 };

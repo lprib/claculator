@@ -256,6 +256,7 @@ public:
    void OnKeyPressed(KeyboardKey k);
 
    std::string GetStackDisplayString(int index);
+   std::string GetStackDisplayStringRadix(int index, NumericDisplayMode::Mode base);
 
    Controller();
 

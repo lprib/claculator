@@ -215,12 +215,16 @@ void Controller::DeleteOneChar() {
    }
 }
 
-std::string Controller::GetStackDisplayString(int index) {
+std::string Controller::GetStackDisplayStringRadix(int index, NumericDisplayMode::Mode mode) {
+   if(state.speculative_stack.data.empty()) {
+      return "";
+   }
+
    calc::Value const& item = state.speculative_stack.data[index];
    switch(item.type()) {
    case calc::Value::Type::kInt: {
       std::array<char, 33> buf{};
-      int base = intbase::as_int(output_display.mode);
+      int base = intbase::as_int(mode);
       std::to_chars(
          &*buf.begin(),
          (&*buf.begin()) + buf.size(),
@@ -247,6 +251,10 @@ std::string Controller::GetStackDisplayString(int index) {
    default:
       return "";
    }
+}
+
+std::string Controller::GetStackDisplayString(int index) {
+   return GetStackDisplayStringRadix(index, output_display.mode);
 }
 
 void Controller::ParseInput() {
